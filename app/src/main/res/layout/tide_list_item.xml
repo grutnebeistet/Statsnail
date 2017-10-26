@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <View
+        android:id="@+id/divider_list_item"
+        style="@style/Divider"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/tide_item_flag"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAllCaps="true"
+            android:textColor="@color/colorPrimaryDark"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:layout_marginLeft="8dp"
+            tools:text="LOW TIDE" />
+
+        <TextView
+            android:id="@+id/tide_item_time"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            tools:text="06:25" />
+
+        <TextView
+            android:id="@+id/tide_item_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            tools:text="0.67m" />
+    </LinearLayout>
+
+
+</LinearLayout>

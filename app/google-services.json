@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "581359857378",
+    "firebase_url": "https://statsnail-1508827198278.firebaseio.com",
+    "project_id": "statsnail-1508827198278",
+    "storage_bucket": "statsnail-1508827198278.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581359857378:android:24579acbd2fb3029",
+        "android_client_info": {
+          "package_name": "com.statsnail.roberts.statsnail"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "581359857378-ms960jbbh2ousp8np102cn1pr3v4nsce.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "581359857378-jnb2lgt2o708gt9m0konk0us4gi2bivh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.statsnail.roberts.statsnail",
+            "certificate_hash": "bfcec46068484c6f8592f9b3c5a086476a41fc6c"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEcs07jAxxj6h4-loksrMmHxq2cJGXzyg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "581359857378-ms960jbbh2ousp8np102cn1pr3v4nsce.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

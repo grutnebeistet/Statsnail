@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">Statsnail</string>
+    <string name="connection_error">Unable to load content. Check your network connection.</string>
+    <string name="xml_error">Error parsing XML.</string>
+    <string name="flag_format" formatted="true" translatable="true">%s TIDE</string>
+
+
+    <string name="no_location_detected">
+        No location detected. Make sure location is enabled on the device.
+    </string>
+
+    <!-- Sign in -->
+    <string name="loading" translatable="true">Loading…</string>
+    <string name="signed_out" translatable="true">Signed out</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="title_text">Statsnail Sign-In</string>
+    <string name="desc_google_icon">Google Logo</string>
+
+    <!-- Weather map act-->
+    <string name="permission_rationale">Location permission is needed for core functionality</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core
+        functionality.</string>
+    <string name="settings">Settings</string>
+
+    <!--    Styling    -->
+    <string name="styled_map_demo_label">Styled Map</string>
+    <string name="styled_map_demo_description">Demonstrates how to style a map.</string>
+    <string name="style_label_retro">Retro</string>
+    <string name="style_label_night">Night</string>
+    <string name="style_label_grayscale">Grayscale</string>
+    <string name="style_label_no_pois_no_transit">No POIs or transit</string>
+    <string name="style_label_default">Default</string>
+    <string name="style_choose">Choose style</string>
+    <string name="style_set_to">Style set to: %1$s</string>
+</resources>
