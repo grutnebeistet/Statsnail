@@ -21,21 +21,31 @@ import timber.log.Timber;
  */
 
 public class Utils {
+
     public static String getUrlFromLocation(Location location) {
         String fromDate = getDate();
         int c = Integer.valueOf(fromDate.substring(fromDate.length() - 1)) + 1;
 
         String tillDate = fromDate.substring(0, fromDate.length() - 1) + c;
         String base = "http://api.sehavniva.no/tideapi.php?lat=" + 63.4581662 +
-                //  location.getLatitude() +
                 "&lon=" + 10.2795140 +
-                //location.getLongitude() +
                 "&fromtime=" +
                 getDate() + "T00%3A00" +
                 "&totime=" +
                 tillDate +
                 "T00%3A00" +
                 "&datatype=tab&refcode=cd&place=&file=&lang=nn&interval=60&dst=1&tzone=1&tide_request=locationdata";
+        if (location != null)
+            base = "http://api.sehavniva.no/tideapi.php?lat=" + //63.4581662 +
+                    location.getLatitude() +
+                    "&lon=" + //10.2795140 +
+                    location.getLongitude() +
+                    "&fromtime=" +
+                    getDate() + "T00%3A00" +
+                    "&totime=" +
+                    tillDate +
+                    "T00%3A00" +
+                    "&datatype=tab&refcode=cd&place=&file=&lang=nn&interval=60&dst=1&tzone=1&tide_request=locationdata";
         Timber.d("URL created: " + base);
         return base;
     }

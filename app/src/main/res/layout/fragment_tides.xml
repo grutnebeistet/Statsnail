@@ -1,67 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <TextView
+    android:layout_height="match_parent"
+    android:background="@color/transparent">
+
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/empty_tides"/>
+        android:layout_height="match_parent" />
 
-    <android.support.constraint.ConstraintLayout
+    <android.support.v7.widget.CardView
+        android:id="@+id/cardview_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="360dp"
+       android:layout_margin="32dp"
+        android:layout_alignParentBottom="true">
 
-        <TextView
-            android:id="@+id/location_name"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_width="336dp"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:paddingTop="16dp"
-            tools:text="Trondheim"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium" />
 
-        <TextView
-            android:id="@+id/forecast_date"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/location_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="Monday, Oct 23rd" />
-
-        <android.support.constraint.Guideline
-            android:id="@+id/divider"
-            app:layout_constraintGuide_percent="0.16"
-            app:layout_constraintTop_toBottomOf="@id/forecast_date"
+        <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp" />
+            android:layout_height="match_parent">
 
-        <!--            <View
-                        style="@style/Divider"
-                        android:id="@+id/divider_view"
-                        android:layout_marginLeft="8dp"
-                        android:layout_marginRight="8dp"
-                        android:layout_marginTop="16dp"
-                        app:layout_constraintLeft_toLeftOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintTop_toBottomOf="@id/forecast_date" />-->
+            <TextView
+                android:id="@+id/location_name"
+                android:layout_width="336dp"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:paddingTop="16dp"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Trondheim" />
+
+            <TextView
+                android:id="@+id/forecast_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/location_name"
+                tools:text="Monday, Oct 23rd" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                app:layout_constraintGuide_percent="0.16"
+                app:layout_constraintTop_toBottomOf="@id/forecast_date" />
+
+            <!--            <View
+                            style="@style/Divider"
+                            android:id="@+id/divider_view"
+                            android:layout_marginLeft="8dp"
+                            android:layout_marginRight="8dp"
+                            android:layout_marginTop="16dp"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/forecast_date" />-->
 
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/tides_recycler_view"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/forecast_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginTop="16dp" />
-    </android.support.constraint.ConstraintLayout>
-</FrameLayout>
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginTop="16dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/forecast_date">
+
+                <TextView
+                    android:id="@+id/tides_error_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    tools:text="Too far away dammit" />
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/tides_recycler_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+        </android.support.constraint.ConstraintLayout>
+    </android.support.v7.widget.CardView>
+</RelativeLayout>

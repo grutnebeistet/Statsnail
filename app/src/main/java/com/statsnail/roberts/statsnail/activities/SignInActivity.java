@@ -24,7 +24,6 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.statsnail.roberts.statsnail.R;
-import com.statsnail.roberts.statsnail.WeatherActivity;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 public class SignInActivity extends AppCompatActivity implements
@@ -132,10 +131,10 @@ public class SignInActivity extends AppCompatActivity implements
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            Intent startChooser = new Intent(this, WeatherActivity.class);
-            startChooser.putExtra("GoogleSignInAccount", acct);
+            Intent in = new Intent(this, MainActivity.class);
+            in.putExtra("GoogleSignInAccount", acct);
             Log.i(TAG, "startChooser med ID " + acct.getId() + " id token " + acct.getIdToken() + " name " + acct.getAccount().name);
-            startActivity(startChooser);
+            startActivity(in);
             finish();
             //mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             //  updateUI(true);

@@ -2,23 +2,35 @@ package com.statsnail.roberts.statsnail.fragments;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.adapters.TidesDataAdapter;
 import com.statsnail.roberts.statsnail.models.LocationData;
@@ -30,6 +42,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -39,14 +52,36 @@ import timber.log.Timber;
  * Created by Adrian on 24/10/2017.
  */
 
-public class TidesFragment extends Fragment {
+public class TidesFragment extends Fragment implements OnMapReadyCallback {
     @BindView(R.id.tides_recycler_view)
     RecyclerView mTidesRecyclerView;
     @BindView(R.id.location_name)
     TextView mLocationTextView;
     @BindView(R.id.forecast_date)
     TextView mDateTimeTextView;
+    @BindView(R.id.tides_error_tv)
+    TextView mErrorTextView;
 
+    String TAG = TidesFragment.class.getSimpleName();
+    private FusedLocationProviderClient mFusedLocationClient;
+    private static final String SELECTED_STYLE = "selected_style";
+
+    private GoogleMap mMap = null;
+    // Stores the ID of the currently selected style, so that we can re-apply it when
+    // the activity restores state, for example when the device changes orientation.
+    private int mSelectedStyleId = R.string.style_label_default;
+
+    // These are simply the string resource IDs for each of the style names. We use them
+    // as identifiers when choosing which style to apply.
+    private int mStyleIds[] = {
+            R.string.style_label_retro,
+            R.string.style_label_night,
+            R.string.style_label_grayscale,
+            R.string.style_label_no_pois_no_transit,
+            R.string.style_label_default,
+    };
+    private static LatLng LAT_LNG;
+    private Location mLocation;
     DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
     DatabaseReference mTides = mRootRef.child("tides");
 
@@ -62,58 +97,58 @@ public class TidesFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Timber.d("TIIIMEEE:: " + Utils.getDate());
-        String tideDataUrl = Utils.getUrlFromLocation((Location) getArguments().getParcelable("location"));
+        if (savedInstanceState != null) {
+            mSelectedStyleId = savedInstanceState.getInt(SELECTED_STYLE);
+        }
+        mLocation = getArguments().getParcelable("location");
+        LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        String tideDataUrl = Utils.getUrlFromLocation(mLocation);
         new DownloadNearbyXmlTask(getActivity()).execute(tideDataUrl);
-        //new DownloadAllXmlTask().execute("http://api.sehavniva.no/tideapi.php?tide_request=stationlist&type=perm");
+        // new DownloadAllXmlTask().execute("http://api.sehavniva.no/tideapi.php?tide_request=stationlist&type=perm");
         //getActivity().getWindow().findViewById(R.id.cardview).setVisibility(View.INVISIBLE);
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-        mTides.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                try {
-                    DataSnapshot todays = dataSnapshot.child(Utils.getDate());
-                    DataSnapshot waterlevels = todays.child("waterlevels");
-
-                    TidesDataAdapter mAdapter = new TidesDataAdapter(getActivity(), waterlevels);
-                    mTidesRecyclerView.setAdapter(mAdapter);
-                    mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
-                    for (DataSnapshot snapshot : todays.child("waterlevels").getChildren()) {
-                        Timber.d("snapshots: " + snapshot.child("time").getValue());
-                    }
-                    String stationName = todays.child("stationName").getValue().toString();
-                    String stationCode = todays.child("stationCode").getValue().toString();
-
-
-                    mLocationTextView.setText(stationName + "\n(" + stationCode + ")");
-                    mDateTimeTextView.setText(Utils.getDate());
-
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        Timber.d(TAG + "   onViewCreated");
+        MapFragment mapFragment = ((MapFragment) getChildFragmentManager().findFragmentById(R.id.map));
+        mapFragment.getMapAsync(this);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        Timber.d(TAG + "   onCreateView");
         View view = inflater.inflate(R.layout.fragment_tides, container, false);
+        Timber.d("onCreateview");
         ButterKnife.bind(this, view);
+
 
         return view;
     }
+
+    @Override
+    public void onMapReady(GoogleMap map) {
+        mMap = map;
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LAT_LNG, 14));
+        setSelectedStyle();
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                //    findViewById(R.id.cardview).setVisibility(View.INVISIBLE);
+            }
+        });
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        // Store the selected map style, so we can assign it when the activity resumes.
+        outState.putInt(SELECTED_STYLE, mSelectedStyleId);
+        super.onSaveInstanceState(outState);
+    }
+
 
     protected class DownloadAllXmlTask extends AsyncTask<String, Void, ArrayList<Station>> {
         @Override
@@ -160,30 +195,118 @@ public class TidesFragment extends Fragment {
 
         @Override
         protected void onPostExecute(LocationData result) {
-            if (result != null) {
-                DatabaseReference tides = mRootRef.child("tides");
-                DatabaseReference date = tides.child(Utils.getDate());
-                DatabaseReference waterlevels = date.child("waterlevels");
-                DatabaseReference stationName = date.child("stationName");
-                DatabaseReference stationCode = date.child("stationCode");
 
-                stationName.setValue(result.stationName);
-                stationCode.setValue(result.stationCode);
-                if (result.waterlevels != null) {
-                    for (int i = 0; i < result.waterlevels.size(); i++) {
-                        DatabaseReference number = waterlevels.child("" + i);
-                        DatabaseReference time = number.child("time");
-                        DatabaseReference level = number.child("level");
-                        DatabaseReference flag = number.child("flag");
-
-                        level.setValue(result.waterlevels.get(i).waterValue);
-                        flag.setValue(result.waterlevels.get(i).flag);
-                        time.setValue(Utils.getFormattedTime(result.waterlevels.get(i).dateTime));
-                    }
-                }
-            } else
-
+            if (result.errorResponse != null) {
+                mErrorTextView.setText(result.errorResponse);
                 Toast.makeText(getActivity(), "Error: " + result.errorResponse, Toast.LENGTH_SHORT).show();
+            } else if (result != null) {
+                Timber.d("Result NOT NULL");
+                TidesDataAdapter mAdapter = new TidesDataAdapter(getActivity(), result.waterlevels);
+                mTidesRecyclerView.setAdapter(mAdapter);
+                mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+                mLocationTextView.setText(result.stationName + "\n(" + result.stationCode + ")");
+                mDateTimeTextView.setText(Utils.getDate());
+
+
+            }
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.styled_map, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.menu_style_choose) {
+            showStylesDialog();
+        }
+        return true;
+    }
+
+    /**
+     * Shows a dialog listing the styles to choose from, and applies the selected
+     * style when chosen.
+     */
+    private void showStylesDialog() {
+        // mStyleIds stores each style's resource ID, and we extract the names here, rather
+        // than using an XML array resource which AlertDialog.Builder.setItems() can also
+        // accept. We do this since using an array resource would mean we would not have
+        // constant values we can switch/case on, when choosing which style to apply.
+        List<String> styleNames = new ArrayList<>();
+        for (int style : mStyleIds) {
+            styleNames.add(getString(style));
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle(getString(R.string.style_choose));
+        builder.setItems(styleNames.toArray(new CharSequence[styleNames.size()]),
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mSelectedStyleId = mStyleIds[which];
+                        String msg = getString(R.string.style_set_to, getString(mSelectedStyleId));
+                        Toast.makeText(getActivity().getBaseContext(), msg, Toast.LENGTH_SHORT).show();
+                        Timber.d(msg);
+                        setSelectedStyle();
+                    }
+                });
+        builder.show();
+    }
+
+    /**
+     * Creates a {@link MapStyleOptions} object via loadRawResourceStyle() (or via the
+     * constructor with a JSON String), then sets it on the {@link GoogleMap} instance,
+     * via the setMapStyle() method.
+     */
+    private void setSelectedStyle() {
+        MapStyleOptions style;
+        switch (mSelectedStyleId) {
+            case R.string.style_label_retro:
+                // Sets the retro style via raw resource JSON.
+                style = MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.mapstyle_retro);
+                break;
+            case R.string.style_label_night:
+                // Sets the night style via raw resource JSON.
+                style = MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.mapstyle_night);
+                break;
+            case R.string.style_label_grayscale:
+                // Sets the grayscale style via raw resource JSON.
+                style = MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.mapstyle_grayscale);
+                break;
+            case R.string.style_label_no_pois_no_transit:
+                // Sets the no POIs or transit style via JSON string.
+                style = new MapStyleOptions("[" +
+                        "  {" +
+                        "    \"featureType\":\"poi.business\"," +
+                        "    \"elementType\":\"all\"," +
+                        "    \"stylers\":[" +
+                        "      {" +
+                        "        \"visibility\":\"off\"" +
+                        "      }" +
+                        "    ]" +
+                        "  }," +
+                        "  {" +
+                        "    \"featureType\":\"transit\"," +
+                        "    \"elementType\":\"all\"," +
+                        "    \"stylers\":[" +
+                        "      {" +
+                        "        \"visibility\":\"off\"" +
+                        "      }" +
+                        "    ]" +
+                        "  }" +
+                        "]");
+                break;
+            case R.string.style_label_default:
+                // Removes previously set style, by setting it to null.
+                style = null;
+                break;
+            default:
+                return;
+        }
+        mMap.setMapStyle(style);
     }
 }

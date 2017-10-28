@@ -12,6 +12,7 @@ import android.widget.TextView;
 import com.google.firebase.database.DataSnapshot;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.models.LocationData;
+import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import timber.log.Timber;
 
 /**
  * Created by Adrian on 24/10/2017.
@@ -29,10 +31,10 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
     ArrayList<LocationData.Waterlevel> mData;
     DataSnapshot mSnapShot;
 
-    public TidesDataAdapter(Context context, DataSnapshot snapshot) {//ArrayList<LocationData.Waterlevel> data) {
+    public TidesDataAdapter(Context context, ArrayList<LocationData.Waterlevel> data) {
         mContext = context;
-        // mData = data;
-        mSnapShot = snapshot;
+        mData = data;
+        //mSnapShot = snapshot;
     }
 
     @Override
@@ -43,32 +45,36 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
 
     @Override
     public void onBindViewHolder(TdViewHolder holder, int position) {
-//        LocationData.Waterlevel waterlevel = mData.get(position);
+        LocationData.Waterlevel waterlevel = mData.get(position);
         String flag = null;
         String time = null;
         String level = null;
-
+/*
         DataSnapshot currentSnap = mSnapShot.child(String.valueOf(position));
 
         flag = currentSnap.child("flag").getValue().toString();
         time = currentSnap.child("time").getValue().toString();
-        level = currentSnap.child("level").getValue().toString();
+        level = currentSnap.child("level").getValue().toString();*/
+        flag = waterlevel.flag;
+        time = waterlevel.dateTime;
+        level = waterlevel.waterValue;
 
+        Timber.d("Adapter  FLAG: " + flag);
 
         if (flag.equals("low")) {
             holder.mDivider.setVisibility(View.INVISIBLE);
         }
 
         holder.mFlag.setText(mContext.getString(R.string.flag_format, flag));
-        holder.mTime.setText(time);
+        holder.mTime.setText(Utils.getFormattedTime(time));
         holder.mLevel.setText(level + " cm");
     }
 
     @Override
 
     public int getItemCount() {
-        return (int) mSnapShot.getChildrenCount();
-        //mData.size();
+        //return (int) mSnapShot.getChildrenCount();
+        return mData.size();
     }
 
     class TdViewHolder extends RecyclerView.ViewHolder {

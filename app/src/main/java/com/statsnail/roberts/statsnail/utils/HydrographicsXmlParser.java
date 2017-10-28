@@ -34,6 +34,7 @@ public class HydrographicsXmlParser {
     }
 
     public ArrayList<Station> parseStations(InputStream in) throws XmlPullParserException, IOException {
+
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -54,42 +55,52 @@ public class HydrographicsXmlParser {
             }
         }
         parser.require(XmlPullParser.START_TAG, ns, "tide");
-        while (!(parser.getName().equals("location"))) parser.nextTag();
+        //
 
         String stationName = null;
         String stationCode = null;
         String latitude = null;
         String longitude = null;
 
-        int attrCount = parser.getAttributeCount();
-        for (int i = 0; i < attrCount; i++) {
-
-            String name = parser.getAttributeName(i);
-            String value = parser.getAttributeValue(i);
-            Timber.d("VAlue all stations " + value);
-            switch (name) {
-                case "name":
-                    stationName = value;
-                    break;
-                case "code":
-                    stationCode = value;
-                    break;
-                case "latitude":
-                    latitude = value;
-                    break;
-                case "longitude":
-                    longitude = value;
-                    break;
+     /*   while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }*/
+        while (!(parser.getName().equals("location"))) parser.nextTag();
+        Timber.d("Naaaaame" + parser.getName());
+//        if (parser.getName().equals("location")) {
+        while ((parser.getName().equals("location"))) {
+            int attrCount = parser.getAttributeCount();
+            for (int i = 0; i < attrCount; i++) {
+                String name = parser.getAttributeName(i);
+                String value = parser.getAttributeValue(i);
+                Timber.d("VAlue all stations " + value);
+                switch (name) {
+                    case "name":
+                        stationName = value;
+                        break;
+                    case "code":
+                        stationCode = value;
+                        break;
+                    case "latitude":
+                        latitude = value;
+                        break;
+                    case "longitude":
+                        longitude = value;
+                        break;
+                }
+                stations.add(new Station(stationName, stationCode, latitude, longitude));
             }
-            stations.add(new Station(stationName, stationCode, latitude, longitude));
+            parser.nextTag();
+            Timber.d("STATIONS: " + parser.getName());
         }
-        Timber.d("STATIONS: " + parser.getName());
 
         return stations;
     }
 
     // Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them off
-// to their respective "read" methods for processing. Otherwise, skips the tag.
+    // to their respective "read" methods for processing. Otherwise, skips the tag.
+
     private LocationData readNearbyStationEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
         if (parser.getName().equals("error")) {
             if (parser.next() == XmlPullParser.TEXT) {
@@ -144,9 +155,7 @@ public class HydrographicsXmlParser {
         int levelsIndex = 0;
         Timber.d(parser.next() + " = next");
         while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
+            if (parser.getEventType() != XmlPullParser.START_TAG) continue;
 
             String name = parser.getName();
             if (name.equals("data")) {

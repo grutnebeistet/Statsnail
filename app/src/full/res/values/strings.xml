@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="edit_text_hint"><font color ='#91917f'>Enter Weight </font></string>
+
+    <string name="spreadsheet_id">1zx1lZfMgQ3z_Ip-6QEnSK0W9YkrRoBI0xmYktvxDrvA</string>
+    <string name="spreadsheet_read_range">sheet4</string>
+
+    <!--Sharedpreferences-->
+    <string name="preference_file_key">preferences</string>
+    <string name="snail_logging_mode">logging_mode</string>
+    <string name="logging_mode_weighing">mode_weighing</string>
+    <string name="logging_mode_grading">mode_grading</string>
+
+    <string name="returned_from_app_settings_to_activity">Returned from app settings to ChooserActivity</string>
+
+    <string name="content_authority">"com.statsnail.roberts.statsnail"</string>
+</resources>

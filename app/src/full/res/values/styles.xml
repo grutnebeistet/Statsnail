@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="EditorStaticText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textAppearance">?android:textAppearanceMedium</item>
+        <item name="android:paddingTop">16dp</item>
+    </style>
+
+    <style name="EditTextGrading">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:hint">@string/edit_text_hint</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:inputType">numberDecimal</item>
+        <item name="android:maxLength">9</item>
+    </style>
+</resources>
