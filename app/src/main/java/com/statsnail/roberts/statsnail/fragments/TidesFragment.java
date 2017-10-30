@@ -1,15 +1,22 @@
 package com.statsnail.roberts.statsnail.fragments;
 
+import android.app.AlarmManager;
 import android.app.Fragment;
+import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.style.TtsSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,18 +43,26 @@ import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.adapters.TidesDataAdapter;
 import com.statsnail.roberts.statsnail.models.LocationData;
 import com.statsnail.roberts.statsnail.models.Station;
+import com.statsnail.roberts.statsnail.sync.NotifyService;
+import com.statsnail.roberts.statsnail.sync.SyncUtils;
 import com.statsnail.roberts.statsnail.utils.NetworkUtils;
+import com.statsnail.roberts.statsnail.utils.NotificationUtils;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
+
+import static android.content.Context.ALARM_SERVICE;
 
 /**
  * Created by Adrian on 24/10/2017.
@@ -62,8 +78,10 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
     @BindView(R.id.tides_error_tv)
     TextView mErrorTextView;
 
+    @BindView(R.id.button_notify)
+    Button satanisme;
+
     String TAG = TidesFragment.class.getSimpleName();
-    private FusedLocationProviderClient mFusedLocationClient;
     private static final String SELECTED_STYLE = "selected_style";
 
     private GoogleMap mMap = null;
@@ -104,8 +122,23 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
         LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
         String tideDataUrl = Utils.getUrlFromLocation(mLocation);
         new DownloadNearbyXmlTask(getActivity()).execute(tideDataUrl);
-        // new DownloadAllXmlTask().execute("http://api.sehavniva.no/tideapi.php?tide_request=stationlist&type=perm");
+        // new DownloadStationsInfoXmlTask().execute("http://api.sehavniva.no/tideapi.php?tide_request=stationlist&type=perm");
         //getActivity().getWindow().findViewById(R.id.cardview).setVisibility(View.INVISIBLE);
+
+
+    }
+
+    private void testNot() {
+        Intent myIntent = new Intent(getActivity(), NotifyService.class);
+        myIntent.putExtra("nextLowTideTime", "13:29");
+        myIntent.putExtra("nextLowTideLevel", "123cm");
+
+        AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(ALARM_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getService(getActivity().getApplicationContext(), 0, myIntent, 0);
+
+        long notificationTime = System.currentTimeMillis();
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
     }
 
     @Override
@@ -123,6 +156,13 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
         View view = inflater.inflate(R.layout.fragment_tides, container, false);
         Timber.d("onCreateview");
         ButterKnife.bind(this, view);
+
+        satanisme.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                testNot();
+            }
+        });
 
 
         return view;
@@ -150,7 +190,7 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
     }
 
 
-    protected class DownloadAllXmlTask extends AsyncTask<String, Void, ArrayList<Station>> {
+    protected class DownloadStationsInfoXmlTask extends AsyncTask<String, Void, ArrayList<Station>> {
         @Override
         protected ArrayList<Station> doInBackground(String... urls) {
             try {
@@ -195,6 +235,12 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
 
         @Override
         protected void onPostExecute(LocationData result) {
+            try {
+                mLocationTextView.setText(Utils.getPlaceName(getActivity(), mLocation));
+            } catch (IOException | NullPointerException e) {
+                e.printStackTrace();
+            }
+            mDateTimeTextView.setText(Utils.getDate(System.currentTimeMillis()));
 
             if (result.errorResponse != null) {
                 mErrorTextView.setText(result.errorResponse);
@@ -205,12 +251,67 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
                 mTidesRecyclerView.setAdapter(mAdapter);
                 mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-                mLocationTextView.setText(result.stationName + "\n(" + result.stationCode + ")");
-                mDateTimeTextView.setText(Utils.getDate());
-
-
+                saveResultsToPref(result);
+                //  mLocationTextView.setText(result.stationName + "\n(" + result.stationCode + ")");
             }
         }
+    }
+
+    private void saveResultsToPref(LocationData result) {
+        //SharedPreferences preferences = getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("latitude", result.latitude);
+        editor.putString("longitude", result.longitude);
+
+        // get next low tide to notify about
+        LocationData.Waterlevel nextLow = null;
+        LocationData.Waterlevel nextHighAfterLow = null;
+        for (int i = 0; i < result.waterlevels.size(); i++) {
+            LocationData.Waterlevel l = result.waterlevels.get(i);
+            if (l.flag.equals("low") && Utils.timeIsAfterNow(Utils.getFormattedTime(l.dateTime))) {
+                nextLow = (nextLow == null || (l.dateTime.compareTo(nextLow.dateTime) < 0) ? l : nextLow);
+                if (i + 1 < result.waterlevels.size())
+                    nextHighAfterLow = result.waterlevels.get(i + 1);
+            }
+
+
+        }
+
+        if (nextLow != null) {
+            Timber.d("nextLow not null....");
+/*            editor.putString("latitude", result.latitude);
+            editor.putString("longitude", result.longitude);
+            editor.putString("nextLowTideTime", nextLow.dateTime);
+            editor.putString("nextLowTideLevel", nextLow.waterValue);*/
+
+            Intent myIntent = new Intent(getActivity(), NotifyService.class);
+            myIntent.putExtra("nextLowTideTime", Utils.getFormattedTime(nextLow.dateTime));
+            myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
+            if (nextHighAfterLow != null) {
+                myIntent.putExtra("nextHighTideTime", Utils.getFormattedTime(nextHighAfterLow.dateTime));
+                myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
+            }
+            AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(ALARM_SERVICE);
+            PendingIntent pendingIntent = PendingIntent.getService(getActivity().getApplicationContext(), 0, myIntent, 0);
+
+            String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
+            calendar.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
+            long offset = TimeUnit.HOURS.toMillis(3);
+            long notificationTime = calendar.getTimeInMillis() - offset;
+            if ((notificationTime + offset) > System.currentTimeMillis())
+                notificationTime = System.currentTimeMillis() + 63000;
+
+            Timber.d("Notific time: " + Utils.getTime(notificationTime) + "\nTidelevel: " + nextLow.waterValue);
+
+
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+            //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);  //set repeating every 24 hours
+        }
+
+        // SyncUtils.initialize(getActivity());
     }
 
     @Override

@@ -20,46 +20,36 @@ import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.fragments.HarvestChooserFragment;
 import com.statsnail.roberts.statsnail.fragments.TidesFragment;
+import com.statsnail.roberts.statsnail.sync.SyncUtils;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -83,7 +73,6 @@ public class MainActivity extends AppCompatActivity {
     protected Location mLastLocation;
     private static final String TAG = MainActivity.class.getSimpleName();
 
-
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
     @BindView(R.id.pager)
@@ -96,11 +85,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
-
         setSupportActionBar(mToolbar);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
+        if (!Utils.isGPSEnabled(this)) {
+            showSnackbar("Without GPS enabled bla bla");
+        }
+      //  SyncUtils.initialize(this);
     }
 
     public static MainActivity getInstance() {
@@ -176,16 +167,8 @@ public class MainActivity extends AppCompatActivity {
                             bindWidgetsWithAnEvent();
                             setupTabLayout();
 
-                            Timber.d("Location: " + mLastLocation.getLatitude());
-                            try {
-                                Timber.d("test stadnavn : " + Utils.getPlaceName(MainActivity.this, mLastLocation));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            //mViewPager.setAdapter(new MainActivity.WeatherPagerAdapter(getFragmentManager()));
                         } else {
-                            Log.w(TAG, "getLastLocation:exception", task.getException());
-                            //showSnackbar(getString(R.string.no_location_detected));
+                            showSnackbar(getString(R.string.no_location_detected));
                         }
                     }
                 });
@@ -200,12 +183,13 @@ public class MainActivity extends AppCompatActivity {
                 .setAction(getString(actionStringId), listener).show();
     }
 
-    /*    private void showSnackbar(final String text) {
-            View container = findViewById(R.id.main_activity_container);
-            if (container != null) {
-                Snackbar.make(container, text, Snackbar.LENGTH_LONG).show();
-            }
-        }*/
+    private void showSnackbar(final String text) {
+        View container = findViewById(R.id.main_activity_container);
+        if (container != null) {
+            Snackbar.make(container, text, Snackbar.LENGTH_LONG).show();
+        }
+    }
+
     private boolean checkPermissions() {
         int permissionState = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION);

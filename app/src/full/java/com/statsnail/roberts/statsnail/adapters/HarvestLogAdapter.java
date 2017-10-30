@@ -16,9 +16,6 @@ import com.google.api.services.sheets.v4.model.ValueRange;
 import com.statsnail.roberts.statsnail.activities.HarvestActivity;
 import com.statsnail.roberts.statsnail.R;
 
-/**
- * Created by Adrian on 18/08/2017.
- */
 
 public class HarvestLogAdapter extends RecyclerView.Adapter<HarvestLogAdapter.LogViewHolder> {
     static String TAG = HarvestLogAdapter.class.getSimpleName();
@@ -35,7 +32,7 @@ public class HarvestLogAdapter extends RecyclerView.Adapter<HarvestLogAdapter.Lo
 
     @Override
     public LogViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.list_item_log, parent, false);
+        View view = LayoutInflater.from(mContext).inflate(R.layout.list_item_log_grading, parent, false);
         return new LogViewHolder(view);
     }
 

@@ -111,6 +111,7 @@ public class HydrographicsXmlParser {
         }
         parser.require(XmlPullParser.START_TAG, ns, "tide");
 
+
         String locName = null;
         String locCode = null;
         String latitude = null;
@@ -121,6 +122,13 @@ public class HydrographicsXmlParser {
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
+            }
+
+            if (parser.getName().equals("nodata")) {
+                Timber.d("nodata  DATA FOUND");
+                if (parser.getAttributeName(0).equals("info"))
+                    return new LocationData(null, null, null, null, null, null, parser.getAttributeValue(0));
+
             }
             if (parser.getName().equals("location")) {
                 int attributeCount = parser.getAttributeCount();

@@ -1,51 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/blue_grey_500"
-    android:orientation="horizontal">
+    android:padding="8dp">
 
-    <RelativeLayout
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1">
+        android:background="@color/blue_grey_500"
+        android:orientation="horizontal"
+        android:weightSum="105">
 
-        <TextView
-            android:id="@+id/ll_harvest_no"
-            android:layout_width="wrap_content"
+
+        <RelativeLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textColor="@color/dim_text"
-            android:textStyle="italic"
-            android:layout_centerHorizontal="true"
-            tools:text="12"/>
-    </RelativeLayout>
+            android:layout_weight="5">
 
-    <RelativeLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="2">
+            <TextView
+                android:id="@+id/ll_harvest_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:textColor="@color/dark_text"
+                android:textStyle="italic"
+                tools:text="12" />
+        </RelativeLayout>
 
-        <TextView
-            android:id="@+id/ll_harvest_date"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textColor="@color/dim_text"
-            android:textStyle="italic"
-            android:paddingLeft="@dimen/activity_margin"
-            tools:text="12.12.2019"/>
-    </RelativeLayout>
+            android:layout_weight="10">
 
-    <RelativeLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="2">
+            <TextView
+                android:id="@+id/ll_harvest_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/activity_margin"
+                android:textColor="@color/dark_text"
+                android:textStyle="italic"
+                tools:text="oct 7" />
+        </RelativeLayout>
 
-        <TextView
-            android:id="@+id/li_log_graded"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textStyle="italic"
-            tools:text="Ivar"/>
-    </RelativeLayout>
-</LinearLayout>
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_loc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="8.2, 72.1" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_weight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="98kg" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_weighed_by"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="I Aasen" />
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_date_graded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="Nov 9" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_super"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="9 kg" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_jumbo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="6 kg" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_large"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="29 kg" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_graded"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="A Olsen" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="10">
+
+            <TextView
+                android:id="@+id/li_log_loss"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                tools:text="56kg" />
+        </RelativeLayout>
+    </LinearLayout>
+</android.support.v7.widget.CardView>

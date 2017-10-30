@@ -21,15 +21,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    flavorDimensions "tier"
     productFlavors {
         full {
             applicationId "com.statsnail.roberts.statsnail.full"
             versionNameSuffix "-full"
+            dimension "tier"
             buildConfigField "boolean", "FULL_VERSION", "false"
         }
         tides {
             applicationId "com.statsnail.roberts.statsnail.tides"
             versionNameSuffix "-tides"
+            dimension "tier"
             buildConfigField "boolean", "TIDES_VERSION", "false"
         }
     }
@@ -72,17 +75,24 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
     compile 'com.jakewharton.timber:timber:4.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile "com.android.support:support-v4:26.1.0"
     compile 'com.android.support:support-v13:26.1.0'
     compile 'pub.devrel:easypermissions:0.3.0'
 
+    compile 'com.firebase:firebase-jobdispatcher:0.5.2'
     compile 'com.google.android.gms:play-services-location:11.4.2'
     compile 'com.google.android.gms:play-services-maps:11.4.2'
     compile 'com.google.android.gms:play-services-auth:11.4.2'
     compile 'com.google.firebase:firebase-database:11.4.2'
     compile 'com.google.firebase:firebase-config:11.4.2'
+    compile 'com.google.firebase:firebase-messaging:11.4.2'
     compile 'com.google.firebase:firebase-core:11.4.2'
-
     compile 'com.google.firebase:firebase-auth:11.4.2'
+
+    // fullCom
+    compile('com.google.apis:google-api-services-script:v1-rev93-1.23.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
     testCompile 'junit:junit:4.12'
 }
 apply plugin: 'com.google.gms.google-services'

@@ -1,5 +1,18 @@
 package com.statsnail.roberts.statsnail.utils;
 
+import android.app.Activity;
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
+import android.support.annotation.NonNull;
+import android.util.Log;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.statsnail.roberts.statsnail.R;
+import com.statsnail.roberts.statsnail.activities.MainActivity;
 import com.statsnail.roberts.statsnail.models.LocationData;
 import com.statsnail.roberts.statsnail.models.Station;
 
@@ -17,7 +30,14 @@ import timber.log.Timber;
  * Created by Adrian on 23/10/2017.
  */
 
-public class NetworkUtils {
+public final class NetworkUtils {
+    static Location mLocation;
+
+    public static void updateTidesData(Context context, Location location) {
+
+    }
+
+
     public static LocationData loadNearbyXml(String url) throws XmlPullParserException, IOException {
         InputStream inputStream = null;
         HydrographicsXmlParser parser = new HydrographicsXmlParser();

@@ -59,9 +59,7 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
         time = waterlevel.dateTime;
         level = waterlevel.waterValue;
 
-        Timber.d("Adapter  FLAG: " + flag);
-
-        if (flag.equals("low")) {
+        if (position == 1 || position == 3) {
             holder.mDivider.setVisibility(View.INVISIBLE);
         }
 

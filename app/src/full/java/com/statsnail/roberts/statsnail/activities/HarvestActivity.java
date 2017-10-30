@@ -91,10 +91,6 @@ public class HarvestActivity extends AppCompatActivity
     private Location mLocation;
 
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
 
     private HarvestLogAdapter mLogAdapter;
     RecyclerView recyclerView;
@@ -379,7 +375,7 @@ public class HarvestActivity extends AppCompatActivity
 
         int selectedHarvestNo = (Integer) mSpinnerHarvestNo.getSelectedItem();
 
-        if (mExistingRows == null || mExistingRows.getValues() == null) {
+        if (mExistingRows.getValues() == null) {
             toastFromThread("Failed to read the online spreadsheet");
 
             supportFinishAfterTransition();
@@ -743,5 +739,9 @@ public class HarvestActivity extends AppCompatActivity
         super.onBackPressed();
     }
 
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 
 }

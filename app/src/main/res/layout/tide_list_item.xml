@@ -15,30 +15,44 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <TextView
-            android:id="@+id/tide_item_flag"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="2">
+        <TextView
+            android:id="@+id/tide_item_flag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:textAllCaps="true"
             android:textColor="@color/colorPrimaryDark_900"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:layout_marginLeft="8dp"
             tools:text="LOW TIDE" />
 
-        <TextView
-            android:id="@+id/tide_item_time"
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:paddingLeft="8dp"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/high_tide"/>
+        </LinearLayout>
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="1">
+        <TextView
+            android:id="@+id/tide_item_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             tools:text="06:25" />
 
         <TextView
+            android:paddingLeft="8dp"
             android:id="@+id/tide_item_value"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             tools:text="0.67m" />
+        </LinearLayout>
     </LinearLayout>
 
 
