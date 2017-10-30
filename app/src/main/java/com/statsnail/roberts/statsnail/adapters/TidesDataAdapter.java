@@ -7,6 +7,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
@@ -62,7 +63,10 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
         if (position == 1 || position == 3) {
             holder.mDivider.setVisibility(View.INVISIBLE);
         }
-
+        if (flag.equals("high"))
+            holder.mFlagImg.setImageResource(R.drawable.high_tide);
+        else if (flag.equals("low"))
+            holder.mFlagImg.setImageResource(R.drawable.low_tide);
         holder.mFlag.setText(mContext.getString(R.string.flag_format, flag));
         holder.mTime.setText(Utils.getFormattedTime(time));
         holder.mLevel.setText(level + " cm");
@@ -84,6 +88,8 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
         TextView mLevel;
         @BindView(R.id.divider_list_item)
         View mDivider;
+        @BindView(R.id.tide_item_flag_img)
+        ImageView mFlagImg;
 
         TdViewHolder(View view) {
             super(view);

@@ -85,6 +85,7 @@ public final class Utils {
         return dateFormat.format(date);
 
     }
+
     public static String getTime(long millis) {
         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("hh:mm", Locale.getDefault());
         Date date = new Date(millis);
@@ -93,6 +94,12 @@ public final class Utils {
 
     }
 
+    public static String getPrettyDate(long millis) {
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("EEE, MMM dd", Locale.getDefault());
+        Date date = new Date(millis);
+
+        return dateFormat.format(date);
+    }
 
     // Returns true if the whole hour of time given (next low tide time) is after current time
     public static boolean timeIsAfterNow(String time) {
@@ -119,28 +126,29 @@ public final class Utils {
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
         String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-        String city = addresses.get(0).getLocality();
+        String fea = addresses.get(0).getFeatureName();
         String state = addresses.get(0).getAdminArea();
         String country = addresses.get(0).getCountryName();
-        String postalCode = addresses.get(0).getPostalCode();
-        String knownName = addresses.get(0).getFeatureName();
-
+        String loc = addresses.get(0).getLocality();
+        String ka = addresses.get(0).getSubLocality();
+        String kairp = addresses.get(0).getPhone();
+        String subAdminArea = addresses.get(0).getSubAdminArea();
 
         String slash = "/";
         StringBuilder builder = new StringBuilder();
 
-        return builder.append(country).append(slash).append(state).append(slash).append(city).toString();
+        return builder.append(country).append(slash).append(state).append(slash).append(subAdminArea)
+                .append(slash).append(ka).append(kairp).append(slash).append(slash).append(loc).append(slash).append(fea).append(slash).append(address).toString();
     }
 
     public static String getPlaceName(Context context, Location location) throws IOException {
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-        String city = addresses.get(0).getLocality();
-        Timber.d("Stedsnavn: " + addresses.get(0).getAdminArea() + ", " +
-                addresses.get(0).getFeatureName() + ", " + addresses.get(0).getLocality() + ", " +
-                addresses.get(0).getPremises() + ", " + addresses.get(0).getSubAdminArea());
 
-        return addresses.get(0).getSubAdminArea() + ", " + addresses.get(0).getAdminArea();
+        String subAdmin = addresses.get(0).getSubAdminArea();
+        String adminArea = addresses.get(0).getAdminArea();
+        return subAdmin == null || subAdmin == "null" ?
+                adminArea : subAdmin + ", " + adminArea;
     }
 
     public static boolean isGPSEnabled(Context mContext) {

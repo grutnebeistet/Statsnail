@@ -1,6 +1,7 @@
 package com.statsnail.roberts.statsnail.sync;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -65,5 +66,15 @@ public class SyncUtils {
         sInitialized = true;
 
         scheduleFirebaseJobDispatcher(context);
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        if (preferences.getString("nextLowTideLevel", null) == null) {
+            startImmediateSync(context);
+        }
+    }
+
+    public static void startImmediateSync(@NonNull final Context context) {
+        Intent intentToSyncImmediately = new Intent(context, StatsnailSyncIntentService.class);
+        context.startService(intentToSyncImmediately);
     }
 }

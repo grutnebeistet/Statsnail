@@ -1,15 +1,13 @@
 package com.statsnail.roberts.statsnail.activities;
 
-/**
- * Created by Adrian on 24/10/2017.
- */
-
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +21,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
@@ -78,7 +77,6 @@ public class SignInActivity extends AppCompatActivity implements
     @Override
     public void onStart() {
         super.onStart();
-
         OptionalPendingResult<GoogleSignInResult> opr = Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
         if (opr.isDone()) {
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
@@ -86,6 +84,7 @@ public class SignInActivity extends AppCompatActivity implements
             Log.d(TAG, "Got cached sign-in");
             GoogleSignInResult result = opr.get();
             handleSignInResult(result);
+
         } else {
             // If the user has not previously signed in on this device or the sign-in has expired,
             // this asynchronous branch will attempt to sign in the user silently.  Cross-device
@@ -129,9 +128,14 @@ public class SignInActivity extends AppCompatActivity implements
     private void handleSignInResult(GoogleSignInResult result) { //TODO her byttet jeg updateUI mot intent main
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
+            findViewById(R.id.sign_in_content).setVisibility(View.VISIBLE);
+            findViewById(R.id.sign_in_content_buttons).setVisibility(View.VISIBLE);
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
-            Intent in = new Intent(this, MainActivity.class);
+            Class c =
+                    ((BuildConfig.APPLICATION_ID).equals("com.statsnail.roberts.statsnail.full") ?
+                            MainActivityFull.class : MainActivity.class);
+            Intent in = new Intent(this, c);
             in.putExtra("GoogleSignInAccount", acct);
             Log.i(TAG, "startChooser med ID " + acct.getId() + " id token " + acct.getIdToken() + " name " + acct.getAccount().name);
             startActivity(in);
@@ -209,6 +213,7 @@ public class SignInActivity extends AppCompatActivity implements
     }
 
     private void hideProgressDialog() {
+
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
             mProgressDialog.hide();
         }
@@ -218,6 +223,7 @@ public class SignInActivity extends AppCompatActivity implements
         if (signedIn) {
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
             findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
+
         } else {
             mStatusTextView.setText(R.string.signed_out);
 

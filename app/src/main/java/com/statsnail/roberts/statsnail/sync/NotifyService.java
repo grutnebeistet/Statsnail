@@ -17,8 +17,10 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 
+import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivity;
+import com.statsnail.roberts.statsnail.activities.MainActivityFull;
 
 import timber.log.Timber;
 
@@ -62,10 +64,12 @@ public class NotifyService extends IntentService {
                 .setSmallIcon(R.drawable.ic_logo)
                 .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.ic_logo))
                 .setContentTitle("Get to work you lazy bastard")
-                .setContentText("Next low tide: " + nextLowTideTime + " o'clock. Following high tide peak: " + nextHighTideTime)
+                .setContentText("Next low tide: " + nextLowTideTime + " o'clock. Following high tide peak: " + nextHighTideTime) //todo if nexthigh null
                 .setAutoCancel(true);
 
-        Intent activityIntent = new Intent(this, MainActivity.class);
+        Class c = (BuildConfig.APPLICATION_ID.equals("com.statsnail.roberts.statsnail.full") ?
+                MainActivityFull.class : MainActivity.class);
+        Intent activityIntent = new Intent(this, c);
 
         TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(this);
         taskStackBuilder.addNextIntentWithParentStack(activityIntent);

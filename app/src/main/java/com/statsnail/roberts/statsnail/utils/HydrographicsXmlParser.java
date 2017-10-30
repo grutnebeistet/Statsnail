@@ -112,8 +112,8 @@ public class HydrographicsXmlParser {
         parser.require(XmlPullParser.START_TAG, ns, "tide");
 
 
-        String locName = null;
-        String locCode = null;
+        String stationName = null;
+        String stationCode = null;
         String latitude = null;
         String longitude = null;
 
@@ -138,10 +138,10 @@ public class HydrographicsXmlParser {
                     Timber.d("Attr Value: " + attrValue);
                     switch (attrName) {
                         case "name":
-                            locName = attrValue;
+                            stationName = attrValue;
                             break;
                         case "code":
-                            locCode = attrValue;
+                            stationCode = attrValue;
                             break;
                         case "latitude":
                             latitude = attrValue;
@@ -189,7 +189,7 @@ public class HydrographicsXmlParser {
                 skip(parser); // nødvendig?
             }
         }
-        return new LocationData(locName, locCode, latitude, longitude, dataType, waterlevels, null);
+        return new LocationData(stationName, stationCode, latitude, longitude, dataType, waterlevels, null);
     }
 
     private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {

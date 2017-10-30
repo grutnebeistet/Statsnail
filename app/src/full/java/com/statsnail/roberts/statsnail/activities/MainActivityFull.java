@@ -44,9 +44,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
-
+import com.statsnail.roberts.statsnail.fragments.HarvestChooserFragment;
 import com.statsnail.roberts.statsnail.fragments.TidesFragment;
-import com.statsnail.roberts.statsnail.sync.SyncUtils;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.io.IOException;
@@ -58,10 +57,10 @@ import timber.log.Timber;
 /**
  * This shows how to style a map with JSON.
  */
-public class MainActivity extends AppCompatActivity {
-    public static MainActivity instance;
+public class MainActivityFull extends AppCompatActivity {
+    public static MainActivityFull instance;
     private TidesFragment mTidesFragment;
-
+    private HarvestChooserFragment mHarvestFragment;
     @BindView(R.id.tab_layout)
     TabLayout mTabs;
     @BindView(R.id.toolbar)
@@ -71,18 +70,19 @@ public class MainActivity extends AppCompatActivity {
      */
     private FusedLocationProviderClient mFusedLocationClient;
     protected Location mLastLocation;
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = MainActivityFull.class.getSimpleName();
 
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
     @BindView(R.id.pager)
     ViewPager mViewPager;
+    SharedPreferences mPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         instance = this;
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_full);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
         setSupportActionBar(mToolbar);
@@ -91,10 +91,10 @@ public class MainActivity extends AppCompatActivity {
         if (!Utils.isGPSEnabled(this)) {
             showSnackbar("Without GPS enabled bla bla");
         }
-        SyncUtils.initialize(this);
+        //  SyncUtils.initialize(this);
     }
 
-    public static MainActivity getInstance() {
+    public static MainActivityFull getInstance() {
         return instance;
     }
 
@@ -106,6 +106,43 @@ public class MainActivity extends AppCompatActivity {
             requestPermissions();
         } else {
             getLastLocation();
+        }
+    }
+
+    private void setupTabLayout() {
+        mTidesFragment = TidesFragment.newInstance(mLastLocation);
+        mHarvestFragment = HarvestChooserFragment.NewInstance(mLastLocation);
+        if (mTabs.getTabCount() == 0) {
+            mTabs.addTab(mTabs.newTab().setText("Tides"), true);
+            mTabs.addTab(mTabs.newTab().setText("Harvest"));
+        }
+    }
+
+    private void bindWidgetsWithAnEvent() {
+        mTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                setCurrentTabFragment(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+    }
+
+    private void setCurrentTabFragment(int tabPosition) {
+        switch (tabPosition) {
+            case 0:
+                replaceFragment(mTidesFragment);
+                break;
+            case 1:
+                replaceFragment(mHarvestFragment);
+                break;
         }
     }
 
@@ -125,6 +162,15 @@ public class MainActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<Location> task) {
                         if (task.isSuccessful() && task.getResult() != null) {
                             mLastLocation = task.getResult();
+                            try {
+                                Timber.d(Utils.getPlaceDirName(MainActivityFull.this, mLastLocation));
+                            } catch (IOException e) {
+
+                            }
+                            // Location retrieved means it's okay to initiate fragments
+                            bindWidgetsWithAnEvent();
+                            setupTabLayout();
+
                         } else {
                             showSnackbar(getString(R.string.no_location_detected));
                         }
@@ -155,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startLocationPermissionRequest() {
-        ActivityCompat.requestPermissions(MainActivity.this,
+        ActivityCompat.requestPermissions(MainActivityFull.this,
                 new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                 REQUEST_PERMISSIONS_REQUEST_CODE);
     }

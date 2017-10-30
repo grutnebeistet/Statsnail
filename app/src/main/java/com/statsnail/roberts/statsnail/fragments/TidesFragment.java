@@ -25,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -80,6 +81,8 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
 
     @BindView(R.id.button_notify)
     Button satanisme;
+/*    @BindView(R.id.image_button_curr_loc)
+    ImageButton mCurrentLocButton;*/
 
     String TAG = TidesFragment.class.getSimpleName();
     private static final String SELECTED_STYLE = "selected_style";
@@ -125,7 +128,6 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
         // new DownloadStationsInfoXmlTask().execute("http://api.sehavniva.no/tideapi.php?tide_request=stationlist&type=perm");
         //getActivity().getWindow().findViewById(R.id.cardview).setVisibility(View.INVISIBLE);
 
-
     }
 
     private void testNot() {
@@ -152,18 +154,14 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        Timber.d(TAG + "   onCreateView");
         View view = inflater.inflate(R.layout.fragment_tides, container, false);
-        Timber.d("onCreateview");
         ButterKnife.bind(this, view);
-
         satanisme.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 testNot();
             }
         });
-
 
         return view;
     }
@@ -240,7 +238,7 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
             } catch (IOException | NullPointerException e) {
                 e.printStackTrace();
             }
-            mDateTimeTextView.setText(Utils.getDate(System.currentTimeMillis()));
+            mDateTimeTextView.setText(Utils.getPrettyDate(System.currentTimeMillis()));
 
             if (result.errorResponse != null) {
                 mErrorTextView.setText(result.errorResponse);
@@ -283,7 +281,7 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
 /*            editor.putString("latitude", result.latitude);
             editor.putString("longitude", result.longitude);
             editor.putString("nextLowTideTime", nextLow.dateTime);
-            editor.putString("nextLowTideLevel", nextLow.waterValue);*/
+                editor.putString("nextLowTideLevel", nextLow.waterValue);*/
 
             Intent myIntent = new Intent(getActivity(), NotifyService.class);
             myIntent.putExtra("nextLowTideTime", Utils.getFormattedTime(nextLow.dateTime));
@@ -296,6 +294,7 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
             PendingIntent pendingIntent = PendingIntent.getService(getActivity().getApplicationContext(), 0, myIntent, 0);
 
             String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
+
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
             calendar.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
@@ -305,7 +304,6 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
                 notificationTime = System.currentTimeMillis() + 63000;
 
             Timber.d("Notific time: " + Utils.getTime(notificationTime) + "\nTidelevel: " + nextLow.waterValue);
-
 
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
             //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);  //set repeating every 24 hours
@@ -333,10 +331,6 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback {
      * style when chosen.
      */
     private void showStylesDialog() {
-        // mStyleIds stores each style's resource ID, and we extract the names here, rather
-        // than using an XML array resource which AlertDialog.Builder.setItems() can also
-        // accept. We do this since using an array resource would mean we would not have
-        // constant values we can switch/case on, when choosing which style to apply.
         List<String> styleNames = new ArrayList<>();
         for (int style : mStyleIds) {
             styleNames.add(getString(style));
