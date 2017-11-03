@@ -1,8 +1,14 @@
 package com.statsnail.roberts.statsnail.utils;
 
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Xml;
 
-import com.statsnail.roberts.statsnail.models.LocationData;
+import com.statsnail.roberts.statsnail.data.TidesContract;
+import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.models.Station;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -14,20 +20,28 @@ import java.util.ArrayList;
 
 import timber.log.Timber;
 
+import static com.statsnail.roberts.statsnail.fragments.TidesFragment.EXTRA_TIDE_QUERY_DATE;
+
 /**
  * Created by Adrian on 23/10/2017.
  */
 
 public class HydrographicsXmlParser {
     private static final String ns = null;
+    Context mContext;
 
-    public LocationData parseNearbyStation(InputStream in) throws XmlPullParserException, IOException {
+    public ContentValues[] parseNearbyStation(Context context, InputStream in) throws XmlPullParserException, IOException {
+        mContext = context;
+        Timber.d("parseNearbyStation");
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
             parser.nextTag();
+
             return readNearbyStationEntry(parser);
+
+
         } finally {
             in.close();
         }
@@ -101,12 +115,24 @@ public class HydrographicsXmlParser {
     // Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them off
     // to their respective "read" methods for processing. Otherwise, skips the tag.
 
-    private LocationData readNearbyStationEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private ContentValues[] readNearbyStationEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
+        Timber.d("readNearbyStationEntry");
+        ContentValues[] tidesValues;
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         if (parser.getName().equals("error")) {
             if (parser.next() == XmlPullParser.TEXT) {
+                tidesValues = new ContentValues[1];
                 Timber.d("Error: " + parser.getText());
+                ContentValues error = new ContentValues();
+                error.put(TidesContract.TidesEntry.COLUMN_TIDE_ERROR_MSG, parser.getText());
+                error.put(TidesContract.TidesEntry.COLUMN_TIDES_DATE,
+                        preferences.getString(EXTRA_TIDE_QUERY_DATE,
+                                Utils.getDate(System.currentTimeMillis())));
+                tidesValues[0] = error;
+                return tidesValues;
 
-                return new LocationData(null, null, null, null, null, null, parser.getText());
+//                return new TidesData(null, null, null, null, null, null, parser.getText());
+
             }
         }
         parser.require(XmlPullParser.START_TAG, ns, "tide");
@@ -125,9 +151,17 @@ public class HydrographicsXmlParser {
             }
 
             if (parser.getName().equals("nodata")) {
-                Timber.d("nodata  DATA FOUND");
-                if (parser.getAttributeName(0).equals("info"))
-                    return new LocationData(null, null, null, null, null, null, parser.getAttributeValue(0));
+                if (parser.getAttributeName(0).equals("info")) {
+                    tidesValues = new ContentValues[1];
+                    ContentValues error = new ContentValues();
+                    error.put(TidesContract.TidesEntry.COLUMN_TIDE_ERROR_MSG, parser.getAttributeValue(0));
+                    error.put(TidesContract.TidesEntry.COLUMN_TIDES_DATE,
+                            preferences.getString(EXTRA_TIDE_QUERY_DATE,
+                                    Utils.getDate(System.currentTimeMillis())));
+                    tidesValues[0] = error;
+                    return tidesValues;
+                }
+                //return new TidesData(null, null, null, null, null, null, parser.getAttributeValue(0));
 
             }
             if (parser.getName().equals("location")) {
@@ -159,37 +193,56 @@ public class HydrographicsXmlParser {
         String atTime;
         String flag;
 
-        ArrayList<LocationData.Waterlevel> waterlevels = new ArrayList<>();
+        ArrayList<TidesData.Waterlevel> waterlevels = new ArrayList<>();
         int levelsIndex = 0;
         Timber.d(parser.next() + " = next");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) continue;
-
             String name = parser.getName();
             if (name.equals("data")) {
                 dataType = parser.getAttributeValue(0);
                 Timber.d("datatype" + dataType);
                 while (parser.next() != XmlPullParser.END_TAG) {
-                    if (parser.getEventType() != XmlPullParser.START_TAG) {
+                    if (parser.getEventType() != XmlPullParser.START_TAG)
                         continue;
-                    }
+
                     name = parser.getName();
                     if (name.equals("waterlevel")) {
                         waterValue = parser.getAttributeValue(0);
                         Timber.d("water " + waterValue);
                         atTime = parser.getAttributeValue(1);
                         flag = parser.getAttributeValue(2);
-                        waterlevels.add(levelsIndex, new LocationData.Waterlevel(waterValue, atTime, flag));
+                        waterlevels.add(levelsIndex, new TidesData.Waterlevel(waterValue, atTime, flag));
+
                         levelsIndex++;
                     }
                     parser.nextTag();
                 }
+                // No point in checking levels beyond the first 4 regarding notification
+                Utils.prepareNotification(mContext,waterlevels.subList(0,4));
+
+                tidesValues = new ContentValues[waterlevels.size()];
+
+                for (int i = 0; i < waterlevels.size(); i++) {
+                    ContentValues values = new ContentValues();
+                    values.put(TidesContract.TidesEntry.COLUMN_TIDES_DATE,
+                            Utils.getFormattedDate(waterlevels.get(i).dateTime));
+                    values.put(TidesContract.TidesEntry.COLUMN_WATER_LEVEL,
+                            waterlevels.get(i).waterValue);
+                    values.put(TidesContract.TidesEntry.COLUMN_LEVEL_FLAG,
+                            waterlevels.get(i).flag);
+                    values.put(TidesContract.TidesEntry.COLUMN_TIME_OF_LEVEL,
+                            Utils.getFormattedTime(waterlevels.get(i).dateTime));
+                    tidesValues[i] = values;
+                }
+                return tidesValues;
 
             } else {
                 skip(parser); // nødvendig?
             }
         }
-        return new LocationData(stationName, stationCode, latitude, longitude, dataType, waterlevels, null);
+        return null;
+        //return new TidesData(stationName, stationCode, latitude, longitude, dataType, waterlevels, null);
     }
 
     private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {

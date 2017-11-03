@@ -13,5 +13,5 @@
 
     <string name="returned_from_app_settings_to_activity">Returned from app settings to ChooserActivity</string>
 
-    <string name="content_authority">"com.statsnail.roberts.statsnail"</string>
+    <string name="content_authority_log">"com.statsnail.roberts.statsnail.log"</string>
 </resources>

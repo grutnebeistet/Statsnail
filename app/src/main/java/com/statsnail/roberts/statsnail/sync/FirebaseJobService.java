@@ -21,6 +21,7 @@ public class FirebaseJobService extends com.firebase.jobdispatcher.JobService {
             protected Void doInBackground(Void... params) {
                 Context context = getApplicationContext();
                 //NetworkUtils.updateTidesData(context);
+
                 return null;
             }
 

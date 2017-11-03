@@ -31,7 +31,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-condensed"
-                android:layout_weight="3"
+                android:layout_weight="2.8"
                 android:layout_marginLeft="8dp"
                 android:textAllCaps="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
@@ -51,25 +51,27 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:paddingStart="54dp"
             android:layout_weight="2"
-            android:gravity="right">
+            android:orientation="horizontal"
+            >
 
             <ImageView xmlns:tools="http://schemas.android.com/tools"
                 android:id="@+id/tide_item_flag_img"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:paddingRight="6dp"
                 android:layout_gravity="center_vertical"
                 tools:src="@drawable/high_tide" />
 
 
             <TextView
                 android:id="@+id/tide_item_value"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="8dp"
-                android:paddingLeft="12dp"
+                android:gravity="end"
                 android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
-                tools:text="0.67m" />
+                tools:text="0.67 cm" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

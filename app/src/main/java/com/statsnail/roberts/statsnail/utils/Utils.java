@@ -1,6 +1,11 @@
 package com.statsnail.roberts.statsnail.utils;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.icu.text.TimeZoneNames;
 import android.location.Address;
 import android.location.Geocoder;
@@ -8,6 +13,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -18,10 +24,18 @@ import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
 import com.firebase.jobdispatcher.Lifetime;
 import com.firebase.jobdispatcher.Trigger;
+import com.statsnail.roberts.statsnail.R;
+import com.statsnail.roberts.statsnail.activities.MainActivityFull;
+import com.statsnail.roberts.statsnail.data.TidesContract;
+import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.sync.FirebaseJobService;
+import com.statsnail.roberts.statsnail.sync.NotifyService;
 
 import java.io.IOException;
 import java.sql.Time;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -32,60 +46,42 @@ import java.util.concurrent.TimeUnit;
 
 import timber.log.Timber;
 
+import static android.content.Context.ALARM_SERVICE;
+
 /**
  * Created by Adrian on 24/10/2017.
  */
 
 public final class Utils {
 
-    public static void updateTidesData(Context contex) {
 
+    // returns millisec from string date
+    public static long getDateInMillisec(String dateString) throws ParseException {
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        Date date = dateFormat.parse(dateString);
+        return date.getTime();
     }
 
-    public static String getUrlFromLocation(Location location) {
-    /*    int year = Calendar.getInstance().get(Calendar.YEAR);
-        int month = Calendar.getInstance().get(Calendar.MONTH);
-        int date = Calendar.getInstance().get(Calendar.DATE);
-        Calendar calendar = new GregorianCalendar(year, month, date);*/
-        String language = "en";
-        String fromDate = getDate(System.currentTimeMillis());
-        long offset = TimeUnit.HOURS.toMillis(24);
-        String tillDate = getDate(System.currentTimeMillis() + offset);
 
-
-        //// fromDate.substring(0, fromDate.length() - 1) + c; // TODO fikse for mnd skift etc
-        //    tillDate = "2017-10-30";
-        String base = "http://api.sehavniva.no/tideapi.php?lat=" + 63.4581662 +
-                "&lon=" + 10.2795140 +
-                "&fromtime=" +
-                fromDate + "T00%3A00" +
-                "&totime=" +
-                tillDate +
-                "T00%3A00" +
-                "&datatype=tab&refcode=cd&place=&file=&lang=" + language + "&interval=60&dst=0&tzone=1&tide_request=locationdata";
-        if (location != null)
-            base = "http://api.sehavniva.no/tideapi.php?lat=" + //63.4581662 +
-                    location.getLatitude() +
-                    "&lon=" + //10.2795140 +
-                    location.getLongitude() +
-                    "&fromtime=" +
-                    fromDate + "T00%3A00" +
-                    "&totime=" +
-                    tillDate +
-                    "T00%3A00" +
-                    "&datatype=tab&refcode=cd&place=&file=&lang=" + language + "&interval=60&dst=0&tzone=1&tide_request=locationdata";
-        Timber.d("URL created: " + base);
-        return base;
+    // returns a date string of the day after param
+    public static String getDatePlusOne(String oldDate) throws ParseException {
+        return getDate(getDateInMillisec(oldDate) + TimeUnit.DAYS.toMillis(1));
     }
 
+    // returns a date string of the day before param
+    public static String getDateMinusOne(String oldDate) throws ParseException {
+        return getDate(getDateInMillisec(oldDate) - TimeUnit.DAYS.toMillis(1));
+    }
+
+    // Returns a date string in yyyy-MM-dd from millisecs
     public static String getDate(long millis) {
         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         Date date = new Date(millis);
-
         return dateFormat.format(date);
 
     }
 
+    // Returns a time string in hh:mm from millisecs
     public static String getTime(long millis) {
         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("hh:mm", Locale.getDefault());
         Date date = new Date(millis);
@@ -94,9 +90,18 @@ public final class Utils {
 
     }
 
+    // Returns a date string in EEE,MMM dd from millisec
     public static String getPrettyDate(long millis) {
         java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("EEE, MMM dd", Locale.getDefault());
         Date date = new Date(millis);
+
+        return dateFormat.format(date);
+    }
+
+    // Returns a date string in EEE,MMM dd from string
+    public static String getPrettyDateFromString(String raw) {
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("EEE, MMM dd", Locale.getDefault());
+        Date date = new Date(raw);
 
         return dateFormat.format(date);
     }
@@ -111,8 +116,14 @@ public final class Utils {
         return lowTideHours > currentHours;
     }
 
+    // Returns a formatted time string from tides APIs (hh:mm)
     public static String getFormattedTime(String rawTime) {
         return rawTime.substring(11, 16);
+    }
+
+    // Returns a formatted date string from tides APIs (yyy-mm-dd)
+    public static String getFormattedDate(String rawDate) {
+        return rawDate.substring(0, 10);
     }
 
     // Returns current time in format hh:mm
@@ -122,7 +133,8 @@ public final class Utils {
         return currentHours + ":" + minutes;
     }
 
-    public static String getPlaceDirName(Context context, Location location) throws IOException {
+    public static String getPlaceDirName(Context context, Location location) throws IOException, IndexOutOfBoundsException {
+        Timber.d("Location null? " + (location == null));
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
         String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
@@ -141,14 +153,24 @@ public final class Utils {
                 .append(slash).append(ka).append(kairp).append(slash).append(slash).append(loc).append(slash).append(fea).append(slash).append(address).toString();
     }
 
-    public static String getPlaceName(Context context, Location location) throws IOException {
-        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+    public static String getPlaceName(Context context) throws IOException {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
+        String latitude = preference.getString(
+                MainActivityFull.EXTRA_LATITUDE, context.getResources().getString(R.string.default_latitude));
+        Timber.d("LAT i getPlaceName: " + latitude);
+        String longitude = preference.getString(
+                MainActivityFull.EXTRA_LONGITUDE, context.getResources().getString(R.string.default_longitude));
 
-        String subAdmin = addresses.get(0).getSubAdminArea();
-        String adminArea = addresses.get(0).getAdminArea();
-        return subAdmin == null || subAdmin == "null" ?
-                adminArea : subAdmin + ", " + adminArea;
+        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+        List<Address> addresses = geocoder.getFromLocation(Double.valueOf(latitude), Double.valueOf(longitude), 1);
+
+        if (addresses.size() != 0) {
+            String subAdmin = addresses.get(0).getSubAdminArea();
+            String adminArea = addresses.get(0).getAdminArea();
+            return subAdmin == null || subAdmin == "null" ?
+                    adminArea : subAdmin + ", " + adminArea;
+        }
+        return "Location unavailable";
     }
 
     public static boolean isGPSEnabled(Context mContext) {
@@ -170,4 +192,48 @@ public final class Utils {
         return (networkInfo != null && networkInfo.isConnectedOrConnecting());
     }
 
+    public static void prepareNotification(Context context, List<TidesData.Waterlevel> waterlevels) {
+        // get next low tide to notify about
+        TidesData.Waterlevel nextLow = null;
+        TidesData.Waterlevel nextHighAfterLow = null;
+        for (int i = 0; i < waterlevels.size(); i++) {
+            Timber.d("sjekker levels nr " + i);
+            TidesData.Waterlevel l = waterlevels.get(i);
+            if (l.flag.equals("low") && Utils.timeIsAfterNow(Utils.getFormattedTime(l.dateTime))) {
+                nextLow = (nextLow == null || (l.dateTime.compareTo(nextLow.dateTime) < 0) ? l : nextLow);
+                if (i + 1 < waterlevels.size())
+                    nextHighAfterLow = waterlevels.get(i + 1);
+            }
+        }
+
+        if (nextLow != null) {
+            Timber.d("nextLow not null....");
+
+            Intent myIntent = new Intent(context, NotifyService.class);
+            myIntent.putExtra("nextLowTideTime", Utils.getFormattedTime(nextLow.dateTime));
+            myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
+            if (nextHighAfterLow != null) {
+                myIntent.putExtra("nextHighTideTime", Utils.getFormattedTime(nextHighAfterLow.dateTime));
+                myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
+            }
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+            PendingIntent pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0, myIntent, 0);
+
+            String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
+            calendar.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
+            long offset = TimeUnit.HOURS.toMillis(3);
+            long notificationTime = calendar.getTimeInMillis() - offset;
+            if ((notificationTime + offset) > System.currentTimeMillis())
+                notificationTime = System.currentTimeMillis() + 63000;
+
+            Timber.d("Notific time: " + Utils.getTime(notificationTime) + "\nTidelevel: " + nextLow.waterValue);
+
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+            //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);  //set repeating every 24 hours
+        }
+
+    }
 }

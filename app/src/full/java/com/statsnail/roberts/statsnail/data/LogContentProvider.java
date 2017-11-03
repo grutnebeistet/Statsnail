@@ -14,9 +14,6 @@ import android.util.Log;
 import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_ID;
 import static com.statsnail.roberts.statsnail.data.LogContract.TABLE_LOGS;
 
-/**
- * Created by Adrian on 18/08/2017.
- */
 
 public class LogContentProvider extends ContentProvider {
     static String TAG = LogContentProvider.class.getSimpleName();

@@ -1,8 +1,7 @@
 package com.statsnail.roberts.statsnail.adapters;
 
 import android.content.Context;
-import android.provider.ContactsContract;
-import android.support.v4.widget.TextViewCompat;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,12 +11,11 @@ import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.statsnail.roberts.statsnail.R;
-import com.statsnail.roberts.statsnail.models.LocationData;
+import com.statsnail.roberts.statsnail.fragments.TidesFragment;
+import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -29,12 +27,14 @@ import timber.log.Timber;
 
 public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdViewHolder> {
     Context mContext;
-    ArrayList<LocationData.Waterlevel> mData;
+    ArrayList<TidesData.Waterlevel> mData;
     DataSnapshot mSnapShot;
+    Cursor mCursor;
 
-    public TidesDataAdapter(Context context, ArrayList<LocationData.Waterlevel> data) {
+    public TidesDataAdapter(Context context) {
+        Timber.d("TidesDataAdapter CREATED");
         mContext = context;
-        mData = data;
+        //mData = data;
         //mSnapShot = snapshot;
     }
 
@@ -46,21 +46,17 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
 
     @Override
     public void onBindViewHolder(TdViewHolder holder, int position) {
-        LocationData.Waterlevel waterlevel = mData.get(position);
+        mCursor.moveToPosition(position);
         String flag = null;
         String time = null;
         String level = null;
-/*
-        DataSnapshot currentSnap = mSnapShot.child(String.valueOf(position));
 
-        flag = currentSnap.child("flag").getValue().toString();
-        time = currentSnap.child("time").getValue().toString();
-        level = currentSnap.child("level").getValue().toString();*/
-        flag = waterlevel.flag;
-        time = waterlevel.dateTime;
-        level = waterlevel.waterValue;
+        flag = mCursor.getString(TidesFragment.INDEX_FLAG);
+        time = mCursor.getString(TidesFragment.INDEX_LEVEL_TIME);
+        level = (mContext.getString(R.string.level_format, mCursor.getString(TidesFragment.INDEX_TIDE_LEVEL)));
+        Timber.d("Date: " + mCursor.getString(TidesFragment.INDEX_TIDE_DATE) +"\nlevel: " +level);
 
-        if (position == 1 || position == 3) {
+        if ((position % 2) != 0) {
             holder.mDivider.setVisibility(View.INVISIBLE);
         }
         if (flag.equals("high"))
@@ -68,15 +64,19 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
         else if (flag.equals("low"))
             holder.mFlagImg.setImageResource(R.drawable.low_tide);
         holder.mFlag.setText(mContext.getString(R.string.flag_format, flag));
-        holder.mTime.setText(Utils.getFormattedTime(time));
-        holder.mLevel.setText(level + " cm");
+        holder.mTime.setText(time);
+        holder.mLevel.setText(level);
+    }
+
+    public void swapCursor(Cursor newCursor) {
+        mCursor = newCursor;
+        notifyDataSetChanged();
     }
 
     @Override
-
     public int getItemCount() {
-        //return (int) mSnapShot.getChildrenCount();
-        return mData.size();
+        if (null == mCursor) return 0;
+        return mCursor.getCount();
     }
 
     class TdViewHolder extends RecyclerView.ViewHolder {

@@ -19,6 +19,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
+        <provider
+            android:name=".data.TidesDataProvider"
+            android:authorities="@string/content_authority"
+            android:exported="false" />
         <activity
             android:name=".activities.SignInActivity"
             android:configChanges="orientation"
@@ -47,6 +51,9 @@
             android:name=".sync.NotifyService"
             android:exported="false" >
         </service>
+        <service
+            android:name=".sync.StatsnailSyncIntentService"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -17,6 +17,8 @@ import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.util.concurrent.TimeUnit;
 
+import timber.log.Timber;
+
 /**
  * Created by Adrian on 29/10/2017.
  */
@@ -74,6 +76,7 @@ public class SyncUtils {
     }
 
     public static void startImmediateSync(@NonNull final Context context) {
+        Timber.d("startImmediateSync");
         Intent intentToSyncImmediately = new Intent(context, StatsnailSyncIntentService.class);
         context.startService(intentToSyncImmediately);
     }

@@ -6,7 +6,7 @@ import java.util.ArrayList;
  * Created by Adrian on 23/10/2017.
  */
 
-public class LocationData {
+public class TidesData {
     public String stationName;
     public String stationCode;
     public String latitude;
@@ -15,7 +15,7 @@ public class LocationData {
     public String errorResponse;
     public ArrayList<Waterlevel> waterlevels;
 
-    public LocationData(String name, String code, String lat, String lon, String type, ArrayList<Waterlevel> levels, String error) {
+    public TidesData(String name, String code, String lat, String lon, String type, ArrayList<Waterlevel> levels, String error) {
         stationName = name;
         stationCode = code;
         latitude = lat;

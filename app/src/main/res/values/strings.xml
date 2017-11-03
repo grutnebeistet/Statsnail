@@ -3,7 +3,12 @@
     <string name="connection_error">Unable to load content. Check your network connection.</string>
     <string name="xml_error">Error parsing XML.</string>
     <string name="flag_format" formatted="true" translatable="true">%s TIDE</string>
+    <string name="level_format" formatted="true" translatable="true">%s cm</string>
 
+    <string name="default_latitude">63.434333</string>
+    <string name="default_longitude">10.395499</string>
+
+    <string name="content_authority">"com.statsnail.roberts.statsnail"</string>
 
     <string name="no_location_detected">
         No location detected. Make sure location is enabled on the device.

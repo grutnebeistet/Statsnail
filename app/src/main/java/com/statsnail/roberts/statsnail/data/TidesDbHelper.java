@@ -9,7 +9,7 @@ public class TidesDbHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "tides.db";
 
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 4;
 
     public TidesDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -20,22 +20,13 @@ public class TidesDbHelper extends SQLiteOpenHelper {
         final String SQL_CREATE_MOVIES_TABLE =
                 "CREATE TABLE " + TidesContract.TidesEntry.TABLE_NAME + " (" +
                         TidesContract.TidesEntry.COLUMN_TIDES_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        TidesContract.TidesEntry.COLUMN_USER_LOCATION + " STRING NOT NULL " +
-                        TidesContract.TidesEntry.COLUMN_USER_LOCATION + " STRING NOT NULL " +
-                /*        MovieEntry.COLUMN_MOVIE_ID + " INTEGER PRIMARY KEY, " +
-                        MovieEntry.COLUMN_MOVIE_ORIGINAL_TITLE + " STRING NOT NULL, " +
-                        MovieEntry.COLUMN_MOVIE_ALTERNATIVE_TITLE + " STRING, " +
-                        MovieEntry.COLUMN_MOVIE_RELEASE_DATE + " STRING NOT NULL, " +
-                        MovieEntry.COLUMN_MOVIE_SYNOPSIS + " STRING NOT NULL, " +
-                        MovieEntry.COLUMN_MOVIE_POSTER + " STRING NOT NULL, " +
-                        MovieEntry.COLUMN_MOVIE_THUMBNAIL + " STRING NOT NULL, " +
-                        MovieEntry.COLUMN_MOVIE_RATING + " DOUBLE NOT NULL, " +
-                        MovieEntry.COLUMN_MOVIE_RUNTIME + " INTEGER, " +
-                        MovieEntry.COLUMN_MOVIE_BY_POPULARITY + " INTEGER DEFAULT 0, " +
-                        MovieEntry.COLUMN_MOVIE_BY_RATING + " INTEGER DEFAULT 0, " +
-                        MovieEntry.COLUMN_MOVIE_BY_FAVOURITE + " INTEGER DEFAULT 0, " +
-                        MovieEntry.COLUMN_STORED_MOVIE_THUMBNAIL + " BLOB, " +
-                        MovieEntry.COLUMN_STORED_MOVIE_POSTER + " BLOB" +*/
+                        TidesContract.TidesEntry.COLUMN_TIDES_DATE + " TEXT, " +
+                        TidesContract.TidesEntry.COLUMN_LEVEL_FLAG + " TEXT, " +
+                        TidesContract.TidesEntry.COLUMN_TIME_OF_LEVEL + " TEXT, " +
+                        TidesContract.TidesEntry.COLUMN_WATER_LEVEL + " TEXT, " +
+                        TidesContract.TidesEntry.COLUMN_TIDE_ERROR_MSG + " TEXT, " +
+                        TidesContract.TidesEntry.COLUMN_WIND_DIRECTION + " TEXT, " +
+                        TidesContract.TidesEntry.COLUMN_WIND_SPEED + " TEXT " +
                         ");";
 
         sqLiteDatabase.execSQL(SQL_CREATE_MOVIES_TABLE);

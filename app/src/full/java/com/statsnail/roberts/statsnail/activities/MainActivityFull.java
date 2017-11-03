@@ -46,6 +46,7 @@ import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.fragments.HarvestChooserFragment;
 import com.statsnail.roberts.statsnail.fragments.TidesFragment;
+import com.statsnail.roberts.statsnail.sync.SyncUtils;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.io.IOException;
@@ -58,6 +59,8 @@ import timber.log.Timber;
  * This shows how to style a map with JSON.
  */
 public class MainActivityFull extends AppCompatActivity {
+    public static final String EXTRA_LATITUDE = "latitude";
+    public static final String EXTRA_LONGITUDE = "longitude";
     public static MainActivityFull instance;
     private TidesFragment mTidesFragment;
     private HarvestChooserFragment mHarvestFragment;
@@ -78,6 +81,7 @@ public class MainActivityFull extends AppCompatActivity {
     ViewPager mViewPager;
     SharedPreferences mPreferences;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,7 +95,7 @@ public class MainActivityFull extends AppCompatActivity {
         if (!Utils.isGPSEnabled(this)) {
             showSnackbar("Without GPS enabled bla bla");
         }
-        //  SyncUtils.initialize(this);
+        SyncUtils.initialize(this);
     }
 
     public static MainActivityFull getInstance() {
@@ -162,6 +166,13 @@ public class MainActivityFull extends AppCompatActivity {
                     public void onComplete(@NonNull Task<Location> task) {
                         if (task.isSuccessful() && task.getResult() != null) {
                             mLastLocation = task.getResult();
+                            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainActivityFull.this);
+                            SharedPreferences.Editor editor = preferences.edit();
+                            // TODO  convert to doubleToRawLongBits
+                            editor.putString(EXTRA_LATITUDE, String.valueOf(mLastLocation.getLatitude()));
+                            editor.putString(EXTRA_LONGITUDE, String.valueOf(mLastLocation.getLongitude()));
+                            editor.commit();
+
                             try {
                                 Timber.d(Utils.getPlaceDirName(MainActivityFull.this, mLastLocation));
                             } catch (IOException e) {

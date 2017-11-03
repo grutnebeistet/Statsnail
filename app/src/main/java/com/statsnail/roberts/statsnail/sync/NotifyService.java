@@ -13,11 +13,11 @@ import android.graphics.drawable.Drawable;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.v4.BuildConfig;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 
-import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivity;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
@@ -67,7 +67,7 @@ public class NotifyService extends IntentService {
                 .setContentText("Next low tide: " + nextLowTideTime + " o'clock. Following high tide peak: " + nextHighTideTime) //todo if nexthigh null
                 .setAutoCancel(true);
 
-        Class c = (BuildConfig.APPLICATION_ID.equals("com.statsnail.roberts.statsnail.full") ?
+        Class c = (com.statsnail.roberts.statsnail.BuildConfig.APPLICATION_ID.equals("com.statsnail.roberts.statsnail.full") ?
                 MainActivityFull.class : MainActivity.class);
         Intent activityIntent = new Intent(this, c);
 
