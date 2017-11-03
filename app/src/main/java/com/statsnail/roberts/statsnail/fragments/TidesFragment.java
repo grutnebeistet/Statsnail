@@ -13,6 +13,7 @@ import android.database.Cursor;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
@@ -26,6 +27,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,7 +56,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -68,7 +69,8 @@ import static android.content.Context.ALARM_SERVICE;
  * Created by Adrian on 24/10/2017.
  */
 
-public class TidesFragment extends Fragment implements OnMapReadyCallback, LoaderManager.LoaderCallbacks<Cursor> {
+public class TidesFragment extends Fragment implements
+        OnMapReadyCallback, LoaderManager.LoaderCallbacks<Cursor> {
     @BindView(R.id.tides_recycler_view)
     RecyclerView mTidesRecyclerView;
     @BindView(R.id.location_name)
@@ -83,6 +85,8 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
     RelativeLayout mPrevDay;
     @BindView(R.id.cardview_container)
     CardView mContainer;
+    @BindView(R.id.image_button_curr_loc)
+    ImageView mResetLoc;
     @BindView(R.id.button_notify)
     Button satanisme;
 
@@ -145,25 +149,31 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
         if (savedInstanceState != null) {
             mSelectedStyleId = savedInstanceState.getInt(SELECTED_STYLE);
         }
-
-        mLocation = getArguments().getParcelable("location");
-        LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis())).commit();
+        initLocation();
+        mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis())).apply();
         mAdapter = new TidesDataAdapter(getActivity());
 
-        getLoaderManager().initLoader(LOADER_ID_TIDES, null, this);
+        getLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
         //getActivity().getWindow().findViewById(R.id.cardview).setVisibility(View.INVISIBLE);
-
 
     }
 
+    private void initLocation() {
+        mLocation = getArguments().getParcelable("location");
+        LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(mLocation.getLongitude()));
+        editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(mLocation.getLatitude()));
+        editor.commit();
+
+        updateValuesOnLocationChange();
+    }
 
     private void testNot() {
         Intent myIntent = new Intent(getActivity(), NotifyService.class);
-        myIntent.putExtra("nextLowTideTime", "13:29");
-        myIntent.putExtra("nextLowTideLevel", "123cm");
+        myIntent.putExtra("nextLowTideTime", System.currentTimeMillis() + TimeUnit.HOURS.toMillis(3));
+        myIntent.putExtra("nextHighTideTime", System.currentTimeMillis() + TimeUnit.HOURS.toMillis(10));
 
         AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(ALARM_SERVICE);
         PendingIntent pendingIntent = PendingIntent.getService(getActivity().getApplicationContext(), 0, myIntent, 0);
@@ -177,8 +187,16 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        MapFragment mapFragment = ((MapFragment) getChildFragmentManager().findFragmentById(R.id.map));
+        final MapFragment mapFragment = ((MapFragment) getChildFragmentManager().findFragmentById(R.id.map));
         mapFragment.getMapAsync(this);
+
+        mResetLoc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                initLocation();
+                onMapReady(mMap);
+            }
+        });
 
         mNextDay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,9 +204,11 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
                 String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                         Utils.getDate(System.currentTimeMillis()));
                 try {
-                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDatePlusOne(currentDate)).commit();
+                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDatePlusOne(currentDate)).apply();
+                    Timber.d("increased to " + Utils.getDatePlusOne(currentDate));
                     getLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
                 } catch (ParseException e) {
+                    Timber.e("failed to increase date");
                     e.printStackTrace();
                 }
                 mPrevDay.setVisibility(View.VISIBLE);
@@ -200,18 +220,16 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
                 String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                         Utils.getDate(System.currentTimeMillis()));
                 try {
-                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDateMinusOne(currentDate)).commit();
+                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDateMinusOne(currentDate)).apply();
                     getLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
-                currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
-                        Utils.getDate(System.currentTimeMillis()));
-                if (currentDate.equals(Utils.getDate(System.currentTimeMillis())))
-                    mPrevDay.setVisibility(View.INVISIBLE);
+
+
             }
         });
-        mContainer.setVisibility(View.VISIBLE);
+
     }
 
     @Nullable
@@ -246,22 +264,32 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
         return null;
     }
 
+
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         Timber.d("cursor size.: " + cursor.getCount());
-        cursor.setNotificationUri(getActivity().getContentResolver(), TidesContract.TidesEntry.CONTENT_URI);
-
+        mContainer.setVisibility(View.VISIBLE);
+        String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
+                Utils.getDate(System.currentTimeMillis()));
+        if (currentDate.compareTo(Utils.getDate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1))) < 0) {
+            mPrevDay.setVisibility(View.INVISIBLE);
+        }
         if (cursor == null || cursor.getCount() == 0) {
+            mErrorTextView.setVisibility(View.VISIBLE);
             mErrorTextView.setText(R.string.connection_error);
+
+            mNextDay.setVisibility(View.INVISIBLE);
         } else if (cursor.getCount() == 1) {
             cursor.moveToFirst();
             mErrorTextView.setVisibility(View.VISIBLE);
             mErrorTextView.setText(cursor.getString(INDEX_ERROR));
             //  Toast.makeText(getActivity(), "Error: " + cursor.getString(INDEX_ERROR), Toast.LENGTH_SHORT).show();
+            mNextDay.setVisibility(View.INVISIBLE);
             mAdapter.swapCursor(null);
         } else {
             mAdapter.swapCursor(cursor);
             mErrorTextView.setVisibility(View.GONE);
+            mNextDay.setVisibility(View.VISIBLE);
         }
         try {
             mLocationTextView.setText(Utils.getPlaceName(getActivity()));
@@ -280,34 +308,39 @@ public class TidesFragment extends Fragment implements OnMapReadyCallback, Loade
         mAdapter.swapCursor(null);
     }
 
+    private void updateValuesOnLocationChange() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                StatsnailSyncTask.syncData(getActivity());
+            }
+        });
+        thread.start();
+        getLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
+    }
+
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LAT_LNG, 8));
 
         setSelectedStyle();
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
-                Timber.d("Map Clicked latitude: " + latLng.latitude);
+            public void onMapLongClick(LatLng latLng) {
+                Timber.d("Map Clicked LAT: " + latLng.latitude);
 
                 SharedPreferences.Editor editor = mPreferences.edit();
+                editor.putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis()));
                 editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(latLng.latitude));
                 editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(latLng.longitude));
                 editor.commit();
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        StatsnailSyncTask.syncData(getActivity());
 
-                    }
-                });
-                thread.start();
-
-                getLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
+                updateValuesOnLocationChange();
                 mContainer.setVisibility(View.VISIBLE);
             }
         });
+
         mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
             @Override
             public void onCameraMove() {

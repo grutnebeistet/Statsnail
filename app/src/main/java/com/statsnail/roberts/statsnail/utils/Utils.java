@@ -54,6 +54,7 @@ import static android.content.Context.ALARM_SERVICE;
 
 public final class Utils {
 
+    private final static String PREVIOUS_NOTIFICATION_TIME = "prev_not";
 
     // returns millisec from string date
     public static long getDateInMillisec(String dateString) throws ParseException {
@@ -65,6 +66,8 @@ public final class Utils {
 
     // returns a date string of the day after param
     public static String getDatePlusOne(String oldDate) throws ParseException {
+//        Timber.d("Date in: " + oldDate + ", plus " + TimeUnit.DAYS.toMillis(1) + ", return: " +
+//                getDate(getDateInMillisec(oldDate) + TimeUnit.DAYS.toMillis(1)));
         return getDate(getDateInMillisec(oldDate) + TimeUnit.DAYS.toMillis(1));
     }
 
@@ -98,22 +101,24 @@ public final class Utils {
         return dateFormat.format(date);
     }
 
-    // Returns a date string in EEE,MMM dd from string
-    public static String getPrettyDateFromString(String raw) {
-        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("EEE, MMM dd", Locale.getDefault());
-        Date date = new Date(raw);
-
-        return dateFormat.format(date);
-    }
 
     // Returns true if the whole hour of time given (next low tide time) is after current time
     public static boolean timeIsAfterNow(String time) {
         int lowTideHours = Integer.valueOf(time.substring(0, 2));
         int currentHours = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         int minutes = Calendar.getInstance().get(Calendar.MINUTE);
-        boolean k = lowTideHours > currentHours;
-        Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " = " + k);
-        return lowTideHours > currentHours;
+        boolean notifyOnNext = lowTideHours >= currentHours;
+        Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " = " + notifyOnNext);
+        return lowTideHours >= currentHours;
+    }
+
+    // Returns a String of remaining time in hours and/or minutes given a time in millisec
+    public static String getRemainingTime(long rawTime) {
+        long millisLeft = rawTime - System.currentTimeMillis();
+        long hoursLeft = TimeUnit.MILLISECONDS.toHours(millisLeft);
+        long minutesLeft = TimeUnit.MILLISECONDS.toMinutes(millisLeft - TimeUnit.HOURS.toMillis(hoursLeft));
+        return (hoursLeft > 0 ? hoursLeft + "h " + minutesLeft + "m " : minutesLeft + " minutes");
+        //(hoursLeft > 1 ? hoursLeft +  "hours" + )
     }
 
     // Returns a formatted time string from tides APIs (hh:mm)
@@ -193,6 +198,7 @@ public final class Utils {
     }
 
     public static void prepareNotification(Context context, List<TidesData.Waterlevel> waterlevels) {
+        Timber.d("prepareNotfic");
         // get next low tide to notify about
         TidesData.Waterlevel nextLow = null;
         TidesData.Waterlevel nextHighAfterLow = null;
@@ -207,32 +213,38 @@ public final class Utils {
         }
 
         if (nextLow != null) {
-            Timber.d("nextLow not null....");
 
-            Intent myIntent = new Intent(context, NotifyService.class);
-            myIntent.putExtra("nextLowTideTime", Utils.getFormattedTime(nextLow.dateTime));
-            myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
-            if (nextHighAfterLow != null) {
-                myIntent.putExtra("nextHighTideTime", Utils.getFormattedTime(nextHighAfterLow.dateTime));
-                myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
-            }
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-            PendingIntent pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0, myIntent, 0);
-
             String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
 
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
-            calendar.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
+            Calendar calendarLowTide = Calendar.getInstance();
+            calendarLowTide.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
+            calendarLowTide.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
             long offset = TimeUnit.HOURS.toMillis(3);
-            long notificationTime = calendar.getTimeInMillis() - offset;
-            if ((notificationTime + offset) > System.currentTimeMillis())
-                notificationTime = System.currentTimeMillis() + 63000;
+            long offsetMargin = TimeUnit.MINUTES.toMillis(1);
+            long notificationTime = calendarLowTide.getTimeInMillis() - offset;
 
-            Timber.d("Notific time: " + Utils.getTime(notificationTime) + "\nTidelevel: " + nextLow.waterValue);
+            // set notification time to one minute from now if it's less than 3 hours till low tide
+            if (((notificationTime + offsetMargin) < (calendarLowTide.getTimeInMillis() - offset)))
+                notificationTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
 
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
-            //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);  //set repeating every 24 hours
+            Intent myIntent = new Intent(context, NotifyService.class);
+            myIntent.putExtra("nextLowTideTime", (calendarLowTide.getTimeInMillis()));
+            myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
+            if (nextHighAfterLow != null) {
+                myIntent.putExtra("nextHighTideTime", (nextHighAfterLow.dateTime));
+                myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
+            }
+
+            PendingIntent pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0, myIntent, 0);
+            Timber.d("TIME: " + Utils.getTime(notificationTime));
+            // Prepare notification only if it hasn't already been shown for this low tide
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            long previous = preferences.getLong(PREVIOUS_NOTIFICATION_TIME, 0);
+            if (!Utils.getTime(previous).equals(Utils.getTime(notificationTime))) {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+                preferences.edit().putLong(PREVIOUS_NOTIFICATION_TIME, notificationTime).apply();
+            }
         }
 
     }

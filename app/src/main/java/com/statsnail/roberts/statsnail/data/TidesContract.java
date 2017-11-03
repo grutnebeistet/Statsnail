@@ -9,7 +9,7 @@ import android.provider.BaseColumns;
 
 public class TidesContract {
 
-    public static final String CONTENT_AUTHORITY = "com.statsnail.roberts.statsnail";
+    public static final String CONTENT_AUTHORITY = "com.statsnail.roberts.statsnail.data.TidesDataProvider";
 
     public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 

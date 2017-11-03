@@ -78,7 +78,11 @@ public class HarvestChooserFragment extends Fragment
         super.onCreate(savedInstanceState);
         getContactPermission();
         mInfo = getActivity().getIntent().getExtras();
-        mInfo.putParcelable("location", getArguments().getParcelable("location"));
+        try {
+            mInfo.putParcelable("location", getArguments().getParcelable("location"));
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
         mSharedPreferences = getActivity().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
     }
 

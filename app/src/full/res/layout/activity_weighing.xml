@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/harvest_background"
-    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:id="@+id/harvest_activity_container"
     android:padding="@dimen/activity_margin">
 
 
@@ -16,25 +18,33 @@
         android:layout_alignParentRight="true"
         android:layout_margin="@dimen/fab_margin"
         android:scaleType="center"
-        app:elevation="4dp"
-        android:src="@android:drawable/ic_menu_add" />
+        android:src="@android:drawable/ic_menu_add"
+        app:elevation="4dp" />
 
     <ImageView
         android:id="@+id/logo"
-        android:layout_width="140dp"
-        android:layout_height="140dp"
-        android:transitionName="logo_transition"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerHorizontal="true"
         android:src="@drawable/ic_logo"
-        android:layout_marginTop="64dp"
-        android:layout_alignParentLeft="true"/>
+        android:transitionName="logo_transition" />
+    <TextView
+        android:id="@+id/user"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/fab_post_data"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="11dp"
+        android:text="Fytti katta" />
+
     <LinearLayout
         android:id="@+id/userinput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:gravity="center_horizontal"
         android:layout_below="@id/logo"
-        android:orientation="horizontal">
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:paddingTop="16dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -57,14 +67,14 @@
                 android:inputType="number"
                 android:maxLength="9"
                 android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/black" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
-                android:paddingTop="16dp"
                 android:layout_marginRight="8dp"
+                android:paddingTop="16dp"
                 android:text="kg"
                 android:textColor="#91917f" />
         </RelativeLayout>
@@ -73,8 +83,8 @@
             android:id="@+id/confirm_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
             android:layout_below="@+id/userinput"
+            android:layout_marginLeft="8dp"
             android:buttonTint="@color/colorAccent" />
 
         <!--      <Button
@@ -86,6 +96,4 @@
                   android:text="Reg fangst" />-->
 
     </LinearLayout>
-
-
 </RelativeLayout>

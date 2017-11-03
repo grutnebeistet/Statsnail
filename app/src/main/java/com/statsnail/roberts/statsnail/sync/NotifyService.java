@@ -21,6 +21,9 @@ import android.support.v4.content.ContextCompat;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivity;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
+import com.statsnail.roberts.statsnail.utils.Utils;
+
+import java.util.concurrent.TimeUnit;
 
 import timber.log.Timber;
 
@@ -39,7 +42,7 @@ public class NotifyService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) throws NullPointerException {
         Timber.d("onHandleIntent!");
-        String nextLowTideTime = intent.getStringExtra("nextLowTideTime");
+        long nextLowTideTime = intent.getLongExtra("nextLowTideTime", 0);
         String nextHighTideTime = intent.getStringExtra("nextHighTideTime");
         NotificationManager notificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -56,15 +59,16 @@ public class NotifyService extends IntentService {
             notificationChannel.enableVibration(true);
             notificationManager.createNotificationChannel(notificationChannel);
         }
-
+        long minutesLeft = TimeUnit.MILLISECONDS.toMinutes(nextLowTideTime - System.currentTimeMillis());
+        long hoursLeft = TimeUnit.MINUTES.toHours(minutesLeft);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
                 .setVibrate(new long[]{0, 100, 100, 100, 100, 100})
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setColor(ContextCompat.getColor(this, R.color.colorAccent))
-                .setSmallIcon(R.drawable.ic_logo)
-                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.ic_logo))
-                .setContentTitle("Get to work you lazy bastard")
-                .setContentText("Next low tide: " + nextLowTideTime + " o'clock. Following high tide peak: " + nextHighTideTime) //todo if nexthigh null
+                .setSmallIcon(R.drawable.logo)
+                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), R.drawable.logo))
+                .setContentTitle("Get ready to dive in! " + Utils.getRemainingTime(nextLowTideTime) + " to tide bottom")
+                .setContentText("Lowest point at " + Utils.getTime((nextLowTideTime)) + ". Following peak at " + Utils.getFormattedTime(nextHighTideTime))
                 .setAutoCancel(true);
 
         Class c = (com.statsnail.roberts.statsnail.BuildConfig.APPLICATION_ID.equals("com.statsnail.roberts.statsnail.full") ?

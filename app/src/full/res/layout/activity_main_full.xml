@@ -39,16 +39,7 @@
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-    <Button
-        android:id="@+id/image_button_curr_loc"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:layout_margin="22dp"
-        android:layout_below="@+id/tab_layout"
-        android:background="@null"
-        android:src="@drawable/current_location" />
+
 
     <android.support.v4.view.ViewPager
         android:id="@+id/pager"

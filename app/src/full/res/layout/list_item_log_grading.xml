@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/blue_grey_500"
     android:orientation="horizontal">
 
     <RelativeLayout
@@ -17,7 +16,7 @@
             android:layout_height="wrap_content"
             android:textColor="@color/dim_text"
             android:textStyle="italic"
-            android:layout_centerHorizontal="true"
+            android:paddingStart="8dp"
             tools:text="12"/>
     </RelativeLayout>
 

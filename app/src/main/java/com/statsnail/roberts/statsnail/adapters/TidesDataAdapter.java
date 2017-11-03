@@ -32,7 +32,6 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
     Cursor mCursor;
 
     public TidesDataAdapter(Context context) {
-        Timber.d("TidesDataAdapter CREATED");
         mContext = context;
         //mData = data;
         //mSnapShot = snapshot;
@@ -54,7 +53,6 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
         flag = mCursor.getString(TidesFragment.INDEX_FLAG);
         time = mCursor.getString(TidesFragment.INDEX_LEVEL_TIME);
         level = (mContext.getString(R.string.level_format, mCursor.getString(TidesFragment.INDEX_TIDE_LEVEL)));
-        Timber.d("Date: " + mCursor.getString(TidesFragment.INDEX_TIDE_DATE) +"\nlevel: " +level);
 
         if ((position % 2) != 0) {
             holder.mDivider.setVisibility(View.INVISIBLE);

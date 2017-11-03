@@ -1,8 +1,10 @@
 package com.statsnail.roberts.statsnail.activities;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -12,12 +14,14 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,6 +33,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -91,9 +96,10 @@ public class HarvestActivity extends AppCompatActivity
     private Location mLocation;
 
 
-
     private HarvestLogAdapter mLogAdapter;
     RecyclerView recyclerView;
+
+    private boolean mExitWithoutPrompt = true;
 
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     public static final int REQUEST_AUTHORIZATION = 1001;
@@ -138,7 +144,7 @@ public class HarvestActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSharedPreferences = this.getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-
+        mGoogleAccount = (GoogleSignInAccount) getIntent().getExtras().get("GoogleSignInAccount");
         mLocation = getIntent().getExtras().getParcelable("location");
         mWeighingMode = mSharedPreferences.getBoolean(getString(R.string.logging_mode_weighing), false);
         mGradingMode = mSharedPreferences.getBoolean(getString(R.string.logging_mode_grading), false);
@@ -148,7 +154,7 @@ public class HarvestActivity extends AppCompatActivity
         ButterKnife.bind(this);
         Timber.d("weihing: " + mWeighingMode + ", grading: " + mGradingMode);
         // google account sent from SignInActivity/launchActivity
-        mGoogleAccount = (GoogleSignInAccount) getIntent().getExtras().get("GoogleSignInAccount");
+
 
         mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(),
                 Arrays.asList(SCOPES)).setBackOff(new ExponentialBackOff())
@@ -172,19 +178,21 @@ public class HarvestActivity extends AppCompatActivity
         readSheet.start();
 
 
-        mFab.setEnabled(false);
+//        mFab.setEnabled(false);
         mFab.setOnClickListener(new View.OnClickListener()
 
         {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, "fab clicked");
+                Timber.d("fab onclick");
                 if (!mCheckBox.isChecked()) {
-                    Toast.makeText(HarvestActivity.this, "Confirm checkbox", Toast.LENGTH_SHORT).show();
-                }
-                if (!Utils.workingConnection(HarvestActivity.this)) {
+                    showSnackbar("Fill in weights and confirm checkbox");
+                } else if (!Utils.workingConnection(HarvestActivity.this)) {
                     Toast.makeText(HarvestActivity.this, "No Internet connection", Toast.LENGTH_SHORT).show();
-                } else if (mWeighingMode) {
+                } else {
+                    showConfirmationDialog();
+                }
+              /*  else if (mWeighingMode) {
 
                     Thread postWeightsThread = new Thread(new Runnable() {
                         @Override
@@ -201,7 +209,7 @@ public class HarvestActivity extends AppCompatActivity
                         }
                     });
                     postGradingsThread.start();
-                }
+                }*/
                 //TODO til seperat method - rydde
             }
         });
@@ -214,6 +222,7 @@ public class HarvestActivity extends AppCompatActivity
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
+                    mExitWithoutPrompt = false;
                     // mRegButton.setEnabled(true);
                     mFab.setEnabled(true);
                     InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -259,6 +268,12 @@ public class HarvestActivity extends AppCompatActivity
         }
     }
 
+    private void showSnackbar(final String text) {
+        View container = findViewById(R.id.harvest_activity_container);
+        if (container != null) {
+            Snackbar.make(container, text, Snackbar.LENGTH_LONG).show();
+        }
+    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -318,7 +333,8 @@ public class HarvestActivity extends AppCompatActivity
         setContentView(R.layout.activity_weighing);
 
         mUserInputCatch = (EditText) findViewById(R.id.catch_edit_text);
-
+        ((TextView) findViewById(R.id.user)).setText(
+                getString(R.string.user_logged_in, mGoogleAccount.getDisplayName()));
         mUserInputCatch.setOnTouchListener(this);
     }
 
@@ -552,8 +568,51 @@ public class HarvestActivity extends AppCompatActivity
         return dateFormat.format(date);
     }
 
+    private String confirmationAttr(EditText editText) {
+        return TextUtils.isEmpty(editText.getText()) ? "-" : editText.getText() + " kg";
+    }
+
     private void showConfirmationDialog() {
-        //TODO
+        String msg;
+        if (mGradingMode)
+            msg = "Super Jumbo: " + confirmationAttr(mEditTextSuperJumbo) + "\nJumbo: " +
+                    confirmationAttr(mEditTextJumbo) + "\nLarge: " + confirmationAttr(mEditTextLarge);
+        else msg = "Total weight: " + confirmationAttr(mUserInputCatch);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirm registration")
+                .setMessage(msg)
+                .setCancelable(false)
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        if (mWeighingMode) {
+                            Thread postWeightsThread = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    postWeighingData();
+                                }
+                            });
+                            postWeightsThread.start();
+                        } else if (mGradingMode) {
+                            Thread postGradingsThread = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    postGradingData();
+                                }
+                            });
+                            postGradingsThread.start();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+
+
     }
 
     private void showSummaryDialog() {
@@ -716,6 +775,7 @@ public class HarvestActivity extends AppCompatActivity
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        mExitWithoutPrompt = false;
         if (v instanceof EditText || v instanceof Spinner) {
             mCheckBox.setChecked(false);
         }
@@ -736,8 +796,27 @@ public class HarvestActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
+        //super.onBackPressed();
+        if (mExitWithoutPrompt) HarvestActivity.this.finish();
+        else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Discard?")
+                    .setCancelable(false)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            HarvestActivity.this.finish();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    });
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
     }
+
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {

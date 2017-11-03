@@ -12,6 +12,6 @@
     <string name="logging_mode_grading">mode_grading</string>
 
     <string name="returned_from_app_settings_to_activity">Returned from app settings to ChooserActivity</string>
-
-    <string name="content_authority_log">"com.statsnail.roberts.statsnail.log"</string>
+<string name="user_logged_in" formatted="true">%s</string>
+    <string name="content_authority_log">com.statsnail.roberts.statsnail.data.LogContentProvider</string>
 </resources>

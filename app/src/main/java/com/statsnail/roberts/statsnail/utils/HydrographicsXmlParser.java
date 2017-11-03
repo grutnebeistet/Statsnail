@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Xml;
 
+import com.statsnail.roberts.statsnail.R;
+import com.statsnail.roberts.statsnail.activities.MainActivityFull;
 import com.statsnail.roberts.statsnail.data.TidesContract;
 import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.models.Station;
@@ -32,7 +34,6 @@ public class HydrographicsXmlParser {
 
     public ContentValues[] parseNearbyStation(Context context, InputStream in) throws XmlPullParserException, IOException {
         mContext = context;
-        Timber.d("parseNearbyStation");
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -65,7 +66,7 @@ public class HydrographicsXmlParser {
 
         if (parser.getName().equals("error")) {
             if (parser.next() == XmlPullParser.TEXT) {
-                Timber.d("Error: " + parser.getText());
+                Timber.e("Error: " + parser.getText());
             }
         }
         parser.require(XmlPullParser.START_TAG, ns, "tide");
@@ -76,19 +77,12 @@ public class HydrographicsXmlParser {
         String latitude = null;
         String longitude = null;
 
-     /*   while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }*/
-        while (!(parser.getName().equals("location"))) parser.nextTag();
-        Timber.d("Naaaaame" + parser.getName());
-//        if (parser.getName().equals("location")) {
+        while (!(parser.getName().equals("location"))) parser.nextTag(); // TODO cleany
         while ((parser.getName().equals("location"))) {
             int attrCount = parser.getAttributeCount();
             for (int i = 0; i < attrCount; i++) {
                 String name = parser.getAttributeName(i);
                 String value = parser.getAttributeValue(i);
-                Timber.d("VAlue all stations " + value);
                 switch (name) {
                     case "name":
                         stationName = value;
@@ -106,7 +100,6 @@ public class HydrographicsXmlParser {
                 stations.add(new Station(stationName, stationCode, latitude, longitude));
             }
             parser.nextTag();
-            Timber.d("STATIONS: " + parser.getName());
         }
 
         return stations;
@@ -116,13 +109,12 @@ public class HydrographicsXmlParser {
     // to their respective "read" methods for processing. Otherwise, skips the tag.
 
     private ContentValues[] readNearbyStationEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
-        Timber.d("readNearbyStationEntry");
         ContentValues[] tidesValues;
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         if (parser.getName().equals("error")) {
             if (parser.next() == XmlPullParser.TEXT) {
                 tidesValues = new ContentValues[1];
-                Timber.d("Error: " + parser.getText());
+                Timber.e("Error: " + parser.getText());
                 ContentValues error = new ContentValues();
                 error.put(TidesContract.TidesEntry.COLUMN_TIDE_ERROR_MSG, parser.getText());
                 error.put(TidesContract.TidesEntry.COLUMN_TIDES_DATE,
@@ -137,19 +129,15 @@ public class HydrographicsXmlParser {
         }
         parser.require(XmlPullParser.START_TAG, ns, "tide");
 
-
         String stationName = null;
         String stationCode = null;
         String latitude = null;
         String longitude = null;
 
-        //   while (!(parser.getName().equals("location"))) parser.nextTag();
-
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
-
             if (parser.getName().equals("nodata")) {
                 if (parser.getAttributeName(0).equals("info")) {
                     tidesValues = new ContentValues[1];
@@ -201,7 +189,6 @@ public class HydrographicsXmlParser {
             String name = parser.getName();
             if (name.equals("data")) {
                 dataType = parser.getAttributeValue(0);
-                Timber.d("datatype" + dataType);
                 while (parser.next() != XmlPullParser.END_TAG) {
                     if (parser.getEventType() != XmlPullParser.START_TAG)
                         continue;
@@ -209,7 +196,6 @@ public class HydrographicsXmlParser {
                     name = parser.getName();
                     if (name.equals("waterlevel")) {
                         waterValue = parser.getAttributeValue(0);
-                        Timber.d("water " + waterValue);
                         atTime = parser.getAttributeValue(1);
                         flag = parser.getAttributeValue(2);
                         waterlevels.add(levelsIndex, new TidesData.Waterlevel(waterValue, atTime, flag));
@@ -218,8 +204,18 @@ public class HydrographicsXmlParser {
                     }
                     parser.nextTag();
                 }
+
+                // prepare notification only if parsed area is actual location
                 // No point in checking levels beyond the first 4 regarding notification
-                Utils.prepareNotification(mContext,waterlevels.subList(0,4));
+                String homeLat = preferences.getString(
+                        MainActivityFull.HOME_LAT, mContext.getString(R.string.default_latitude));
+                String homeLong = preferences.getString(
+                        MainActivityFull.HOME_LON, mContext.getString(R.string.default_longitude));
+
+                if (latitude != null && longitude != null &&
+                        latitude.substring(0, 7).equals(homeLat.substring(0, 7))
+                        && longitude.substring(0, 7).equals(homeLong.substring(0, 7)))
+                    Utils.prepareNotification(mContext, waterlevels.subList(0, 4));
 
                 tidesValues = new ContentValues[waterlevels.size()];
 
