@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="edit_text_hint"><font color ='#91917f'>Enter Weight </font></string>
+    <string name="edit_text_hint"><font color='#91917f'>Enter Weight </font></string>
 
     <string name="spreadsheet_id">1zx1lZfMgQ3z_Ip-6QEnSK0W9YkrRoBI0xmYktvxDrvA</string>
     <string name="spreadsheet_read_range">sheet4</string>
@@ -12,6 +12,19 @@
     <string name="logging_mode_grading">mode_grading</string>
 
     <string name="returned_from_app_settings_to_activity">Returned from app settings to ChooserActivity</string>
-<string name="user_logged_in" formatted="true">%s</string>
-    <string name="content_authority_log">com.statsnail.roberts.statsnail.data.LogContentProvider</string>
+    <string name="user_logged_in" formatted="true">%s</string>
+    <string name="content_authority_full">com.statsnail.roberts.statsnail.full</string>
+
+    <!--Errors, info-->
+    <string name="error_register_failed_connection">Failed to register catch! Check connection</string>
+    <string name="error_register_failed">Failed to register catch!</string>
+    <string name="toast_harvest_graded" formatted="true">Harvest number %d graded</string>
+    <string name="toast_harvest_added" formatted="true">Harvest number %d registered</string>
+    <string name="measure_in_kg" formatted="true">%s Kg</string>
+    <string name="measure_in_kg_int" formatted="true">%x Kg</string>
+    <string name="error_reading_sheet">Failed to read the online spreadsheet</string>
+
+    <!--Dialog-->
+    <string name="grade_confirmation">Super Jumbo: %s\nJumbo: %s\nLarge: %s</string>
+    <string name="weight_confirmation">Total weight: %s</string>
 </resources>

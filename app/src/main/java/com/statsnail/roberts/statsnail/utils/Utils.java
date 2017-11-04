@@ -194,7 +194,7 @@ public final class Utils {
 
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
-        return (networkInfo != null && networkInfo.isConnectedOrConnecting());
+        return (networkInfo != null && networkInfo.isConnected());
     }
 
     public static void prepareNotification(Context context, List<TidesData.Waterlevel> waterlevels) {

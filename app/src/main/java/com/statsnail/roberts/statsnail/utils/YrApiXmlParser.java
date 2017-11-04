@@ -9,6 +9,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import timber.log.Timber;
+
 /**
  * Created by Adrian on 25/10/2017.
  */
@@ -30,7 +32,19 @@ public class YrApiXmlParser {
         }
     }
 
-    private ContentValues[] readWindsXml(XmlPullParser pullParser) throws XmlPullParserException, IOException {
-        return null;
+    private ContentValues[] readWindsXml(XmlPullParser parser) throws XmlPullParserException, IOException {
+        ContentValues[] windsValues = null;
+
+        parser.require(XmlPullParser.START_TAG, ns, "weatherdata");
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+            Timber.d("parser: " + parser.getName());
+            if (parser.getEventType() != XmlPullParser.START_TAG) continue;
+            String name = parser.getName();
+            if (name.equals("product")) {
+                Timber.d("parser: " + parser.getName());
+            }
+        }
+        return windsValues;
     }
 }

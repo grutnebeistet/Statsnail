@@ -36,10 +36,14 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.statsnail.roberts.statsnail.BuildConfig;
@@ -61,8 +65,8 @@ import timber.log.Timber;
 public class MainActivityFull extends AppCompatActivity {
     public static final String EXTRA_LATITUDE = "latitude";
     public static final String EXTRA_LONGITUDE = "longitude";
-    public static final String HOME_LAT ="home_lat";
-    public static final String HOME_LON ="home_lon";
+    public static final String HOME_LAT = "home_lat";
+    public static final String HOME_LON = "home_lon";
     public static MainActivityFull instance;
     private TidesFragment mTidesFragment;
     private HarvestChooserFragment mHarvestFragment;
@@ -152,9 +156,8 @@ public class MainActivityFull extends AppCompatActivity {
         }
     }
 
-    public void replaceFragment(Fragment fragment) {
-        FragmentManager fm = getFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
+    public void replaceFragment(android.support.v4.app.Fragment fragment) {
+        android.support.v4.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.frag_container, fragment);
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.commit();
@@ -177,7 +180,6 @@ public class MainActivityFull extends AppCompatActivity {
                             editor.putString(HOME_LON, String.valueOf(mLastLocation.getLongitude()));
                             editor.commit();
 
-                            Timber.d("Location commited");
                             SyncUtils.initialize(MainActivityFull.this);
                             try {
                                 Timber.d(Utils.getPlaceDirName(MainActivityFull.this, mLastLocation));
@@ -231,8 +233,6 @@ public class MainActivityFull extends AppCompatActivity {
         // Provide an additional rationale to the user. This would happen if the user denied the
         // request previously, but didn't check the "Don't ask again" checkbox.
         if (shouldProvideRationale) {
-            Log.i(TAG, "Displaying permission rationale to provide additional context.");
-
             showSnackbar(R.string.permission_rationale, android.R.string.ok,
                     new View.OnClickListener() {
                         @Override
@@ -243,12 +243,35 @@ public class MainActivityFull extends AppCompatActivity {
                     });
 
         } else {
-            Log.i(TAG, "Requesting permission");
             // Request permission. It's possible this can be auto answered if device policy
             // sets the permission in a given state or the user denied the permission
             // previously and checked "Never ask again".
             startLocationPermissionRequest();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        /* Use AppCompatActivity's method getMenuInflater to get a handle on the menu inflater */
+        MenuInflater inflater = getMenuInflater();
+        /* Use the inflater's inflate method to inflate our menu layout to this menu */
+        inflater.inflate(R.menu.menu_main, menu);
+        /* Return true so that the menu is displayed in the Toolbar */
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+
+
+        return super.onOptionsItemSelected(item);
     }
 
     /**

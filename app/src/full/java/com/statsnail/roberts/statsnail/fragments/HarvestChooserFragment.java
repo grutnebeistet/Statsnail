@@ -1,7 +1,6 @@
 package com.statsnail.roberts.statsnail.fragments;
 
 import android.Manifest;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,12 +11,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -27,16 +24,17 @@ import com.statsnail.roberts.statsnail.R;
 
 import java.util.List;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.AppSettingsDialog;
 import pub.devrel.easypermissions.EasyPermissions;
-import timber.log.Timber;
 
-public class HarvestChooserFragment extends Fragment
+public class HarvestChooserFragment extends android.support.v4.app.Fragment
         implements EasyPermissions.PermissionCallbacks,
         View.OnClickListener {
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
+    public static final String EXTRA_LOCATION = "location";
 
     private static final String TAG = HarvestChooserFragment.class.getSimpleName();
     private Bundle mInfo;
@@ -45,19 +43,20 @@ public class HarvestChooserFragment extends Fragment
     private ActionBarDrawerToggle mDrawerToggle;
     private ListView mDrawerList;
     DrawerLayout mDrawerLayout;
-
-    private Button mGrading;
-    private Button mWeighing;
     private Location mLocation;
+
+    @BindView(R.id.open_grading_button)
+    Button mGrading;
+    @BindView(R.id.open_weighing_button)
+    Button mWeighing;
 
     public static HarvestChooserFragment NewInstance(Location location) {
         Bundle args = new Bundle();
-        args.putParcelable("location", location);
-        HarvestChooserFragment f = new HarvestChooserFragment();
-        f.setArguments(args);
-        Timber.d("Harvest new Instance...");
+        args.putParcelable(EXTRA_LOCATION, location);
+        HarvestChooserFragment chooserFragment = new HarvestChooserFragment();
+        chooserFragment.setArguments(args);
 
-        return f;
+        return chooserFragment;
     }
 
     @Nullable
@@ -65,8 +64,6 @@ public class HarvestChooserFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chooser, container, false);
         ButterKnife.bind(this, view);
-        mGrading = (Button) view.findViewById(R.id.open_grading_button);
-        mWeighing = (Button) view.findViewById(R.id.open_weighing_button);
         mGrading.setOnClickListener(this);
         mWeighing.setOnClickListener(this);
 
@@ -76,10 +73,10 @@ public class HarvestChooserFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getContactPermission();
+        getAccountsPermission();
         mInfo = getActivity().getIntent().getExtras();
         try {
-            mInfo.putParcelable("location", getArguments().getParcelable("location"));
+            mInfo.putParcelable(EXTRA_LOCATION, getArguments().getParcelable(EXTRA_LOCATION));
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -98,15 +95,14 @@ public class HarvestChooserFragment extends Fragment
 
     @Override
     public void onPermissionsDenied(int requestCode, List<String> perms) {
-        Log.d(TAG, "onPermissionsDenied:" + requestCode + ":" + perms.size());
         String toastMsg = "";
         switch (requestCode) {
             case REQUEST_PERMISSION_GET_ACCOUNTS:
-                toastMsg = "Contact permissions required!";
+                toastMsg = "Accounts permissions required!";
                 mWeighing.setEnabled(false);
                 mGrading.setEnabled(false);
                 // request contact permissions again
-                getContactPermission();
+                //   getAccountsPermission(); // TODO not necessary not  - maybe later if sheet should be picked from the account
                 break;
         }
         Toast.makeText(getActivity(), toastMsg, Toast.LENGTH_SHORT).show();
@@ -139,13 +135,11 @@ public class HarvestChooserFragment extends Fragment
 
 
     @AfterPermissionGranted(REQUEST_PERMISSION_GET_ACCOUNTS)
-    public void getContactPermission() {
-
-        Log.i(TAG, "getContactPerm");
+    public void getAccountsPermission() {
         if (!EasyPermissions.hasPermissions(getActivity(),
                 Manifest.permission.GET_ACCOUNTS)) {
             EasyPermissions.requestPermissions(this,
-                    "Contact permissions are required to communicate with Statsnail's spreadsheet",
+                    "Accounts permissions are required to communicate with Statsnail's spreadsheet",
                     REQUEST_PERMISSION_GET_ACCOUNTS,
                     Manifest.permission.GET_ACCOUNTS);
 

@@ -1,2 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string-array name="listArrayMapsLabels">
+        <item>@string/style_label_default</item>
+        <item>@string/style_label_night</item>
+        <item>@string/style_label_grayscale</item>
+        <item>@string/style_label_no_pois_no_transit</item>
+    </string-array>
+    <string-array name="listValues">
+        <item>@string/style_label_default</item>
+        <item>@string/style_label_night</item>
+        <item>@string/style_label_grayscale</item>
+        <item>@string/style_label_no_pois_no_transit</item>
+    </string-array>
+</resources>

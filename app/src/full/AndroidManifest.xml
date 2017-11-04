@@ -4,7 +4,7 @@
     <application>
         <provider
             android:name=".data.LogContentProvider"
-            android:authorities="@string/content_authority_log"
+            android:authorities="@string/content_authority_full"
             android:exported="false" />
         <meta-data
             android:name="com.google.android.gms.version"

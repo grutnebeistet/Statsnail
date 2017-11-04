@@ -29,16 +29,6 @@ public class LogContentProvider extends ContentProvider {
 
         sUriMatcher.addURI(LogContract.CONTENT_AUTHORITY, LogContract.PATH_LOG + "/#", HARVEST_LOG_ID);
     }
-/*    private static final UriMatcher sUriMatcher = buildUriMatcher();
-
-    static UriMatcher buildUriMatcher() {
-        final UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
-        final String authority = LogContract.CONTENT_AUTHORITY;
-        matcher.addURI(authority, LogContract.PATH_LOG, HARVEST_LOG);
-        matcher.addURI(authority, LogContract.PATH_LOG, HARVEST_LOG_ID);
-
-        return matcher;
-    }*/
 
     @Override
     public boolean onCreate() {

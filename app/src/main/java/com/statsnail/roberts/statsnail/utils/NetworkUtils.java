@@ -52,7 +52,7 @@ public final class NetworkUtils {
                 MainActivityFull.EXTRA_LONGITUDE, context.getResources().getString(R.string.default_longitude));
         String language = "en";
         String fromDate = Utils.getDate(System.currentTimeMillis());
-        long offset = TimeUnit.DAYS.toMillis(5);
+        long offset = TimeUnit.DAYS.toMillis(7);
         String tillDate = Utils.getDate(System.currentTimeMillis() + offset);
 
 /*        Uri queryUri = Uri.parse(TIDES_BASE_URL).buildUpon()
@@ -88,7 +88,8 @@ public final class NetworkUtils {
     }
 
     public static String buildWindsRequestUrl(Context context) {
-        String base = "http://api.met.no/weatherapi/locationforecast/1.9/";  //?lat=60.10;lon=9.58
+        String base = "https://beta.api.met.no/weatherapi/spotwind/1.0/?";
+                //"http://api.met.no/weatherapi/locationforecast/1.9/";  //?lat=60.10;lon=9.58
 
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
         String latitude = preference.getString(
@@ -104,7 +105,7 @@ public final class NetworkUtils {
 
     }
 
-    public static ContentValues[] loadNearbyXml(Context context,String url) throws XmlPullParserException, IOException {
+    public static ContentValues[] loadNearbyXml(Context context, String url) throws XmlPullParserException, IOException {
         InputStream inputStream = null;
         HydrographicsXmlParser parser = new HydrographicsXmlParser();
         ContentValues[] tidesValues;
@@ -126,7 +127,7 @@ public final class NetworkUtils {
 
         try {
             inputStream = downloadUrl(url);
-           // windsValues = parser.parseNearbyStation(inputStream);
+            windsValues = parser.parseWinds(inputStream);
         } finally {
             if (inputStream != null) inputStream.close();
         }

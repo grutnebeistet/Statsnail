@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +25,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.utils.Utils;
+
+import butterknife.BindView;
 
 public class SignInActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
@@ -49,29 +52,17 @@ public class SignInActivity extends AppCompatActivity implements
         findViewById(R.id.sign_out_button).setOnClickListener(this);
         findViewById(R.id.disconnect_button).setOnClickListener(this);
 
-        // [START configure_signin]
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
-        // [END configure_signin]
 
-        // [START build_client]
-        // Build a GoogleApiClient with access to the Google Sign-In API and the
-        // options specified by gso.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
 
-        // [END build_client]
-
-        // [START customize_button]
-        // Set the dimensions of the sign-in button.
-        SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        SignInButton signInButton = findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_STANDARD);
-        // [END customize_button]
     }
 
     @Override
@@ -81,7 +72,6 @@ public class SignInActivity extends AppCompatActivity implements
         if (opr.isDone()) {
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
             // and the GoogleSignInResult will be available instantly.
-            Log.d(TAG, "Got cached sign-in");
             GoogleSignInResult result = opr.get();
             handleSignInResult(result);
 
@@ -99,10 +89,20 @@ public class SignInActivity extends AppCompatActivity implements
                     }
                 });
             } else {
-                Toast.makeText(this, "No Internet connection", Toast.LENGTH_SHORT).show();
+                showSnackbar(getString(R.string.connection_error));
             }
         }
     }
+
+
+
+    private void showSnackbar(final String text) {
+        View container = findViewById(R.id.main_layout);
+        if (container != null) {
+            Snackbar.make(container, text, Snackbar.LENGTH_LONG).show();
+        }
+    }
+
 
     @Override
     protected void onResume() {
@@ -126,7 +126,6 @@ public class SignInActivity extends AppCompatActivity implements
 
     // [START handleSignInResult]
     private void handleSignInResult(GoogleSignInResult result) { //TODO her byttet jeg updateUI mot intent main
-        Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
             findViewById(R.id.sign_in_content).setVisibility(View.VISIBLE);
             findViewById(R.id.sign_in_content_buttons).setVisibility(View.VISIBLE);

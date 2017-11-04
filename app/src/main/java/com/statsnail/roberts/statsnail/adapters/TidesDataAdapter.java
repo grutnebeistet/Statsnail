@@ -49,7 +49,7 @@ public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdVi
         String flag = null;
         String time = null;
         String level = null;
-
+        
         flag = mCursor.getString(TidesFragment.INDEX_FLAG);
         time = mCursor.getString(TidesFragment.INDEX_LEVEL_TIME);
         level = (mContext.getString(R.string.level_format, mCursor.getString(TidesFragment.INDEX_TIDE_LEVEL)));

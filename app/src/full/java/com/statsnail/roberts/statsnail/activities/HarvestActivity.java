@@ -1,6 +1,5 @@
 package com.statsnail.roberts.statsnail.activities;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -67,7 +66,6 @@ import butterknife.ButterKnife;
 import pub.devrel.easypermissions.EasyPermissions;
 import timber.log.Timber;
 
-import static com.statsnail.roberts.statsnail.R.id.fab_post_data;
 import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_DATE;
 import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_GRADED_BY;
 import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_ID;
@@ -80,13 +78,10 @@ public class HarvestActivity extends AppCompatActivity
         LoaderManager.LoaderCallbacks<Cursor>, GoogleApiClient.OnConnectionFailedListener {
     private static final String TAG = HarvestActivity.class.getSimpleName();
 
-    private GoogleApiClient mGoogleApiClient;
     GoogleAccountCredential mCredential;
     private GoogleSignInAccount mGoogleAccount;
     private GoogleCredential mCredentiall;
 
-    NumberPicker mNumberPicker;
-    private Button mRegButton;
     private EditText mUserInputCatch;
     private EditText mEditTextSuperJumbo;
     private EditText mEditTextJumbo;
@@ -114,7 +109,6 @@ public class HarvestActivity extends AppCompatActivity
     private boolean mWeighingMode;
     private boolean mGradingMode;
     private SharedPreferences mSharedPreferences;
-    private CheckBox mCheckBox;
 
     private ValueRange mExistingRows;
 
@@ -134,6 +128,8 @@ public class HarvestActivity extends AppCompatActivity
 
     @BindView(R.id.fab_post_data)
     FloatingActionButton mFab;
+    @BindView(R.id.confirm_checkbox)
+    CheckBox mCheckBox;
 
     /**
      * This activity runs either in Weighing or Grading mode
@@ -152,9 +148,6 @@ public class HarvestActivity extends AppCompatActivity
         if (mWeighingMode) setupWeighingUi();
         else if (mGradingMode) setupGradingUi();
         ButterKnife.bind(this);
-        Timber.d("weihing: " + mWeighingMode + ", grading: " + mGradingMode);
-        // google account sent from SignInActivity/launchActivity
-
 
         mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(),
                 Arrays.asList(SCOPES)).setBackOff(new ExponentialBackOff())
@@ -172,7 +165,7 @@ public class HarvestActivity extends AppCompatActivity
         Thread readSheet = new Thread(new Runnable() {
             @Override
             public void run() {
-                mExistingRows = HarvestUtils.readShit(HarvestActivity.this, mService);
+                mExistingRows = HarvestUtils.readSheet(HarvestActivity.this, mService);
             }
         });
         readSheet.start();
@@ -192,30 +185,9 @@ public class HarvestActivity extends AppCompatActivity
                 } else {
                     showConfirmationDialog();
                 }
-              /*  else if (mWeighingMode) {
-
-                    Thread postWeightsThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            postWeighingData();
-                        }
-                    });
-                    postWeightsThread.start();
-                } else if (mGradingMode) {
-                    Thread postGradingsThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            postGradingData();
-                        }
-                    });
-                    postGradingsThread.start();
-                }*/
-                //TODO til seperat method - rydde
             }
         });
-        //     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-        mCheckBox = (CheckBox) findViewById(R.id.confirm_checkbox);
         mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
 
         {
@@ -230,9 +202,6 @@ public class HarvestActivity extends AppCompatActivity
                     if (mWeighingMode) {
                         imm.hideSoftInputFromWindow(mUserInputCatch.getWindowToken(), 0);
                         mUserInputCatch.setEnabled(false);
-                        //new Dialog(MainActivity.this).findViewById( //TODO
-
-
                     }
                     if (mGradingMode) {
                         imm.hideSoftInputFromWindow(mEditTextSuperJumbo.getWindowToken(), 0);
@@ -288,25 +257,20 @@ public class HarvestActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-
-        Log.i(TAG, "RV count: " + recyclerView.getLayoutManager().getItemCount());
         recyclerView.scrollToPosition(recyclerView.getLayoutManager().getItemCount() - 1);
 
         if (mGradingMode) {
             ArrayList<Integer> ungradedHarvests = new ArrayList<>();
             data.moveToFirst();
-            Log.i(TAG, "cursor count " + data.getCount());
             // Looping backwards through harvestnumbers, adding every ungraded to the list
             data.moveToLast();
             while (!data.isBeforeFirst()) {
                 if (data.getString(INDEX_HARVEST_GRADED) == null) {
-                    Log.i(TAG, "cursor ints " + data.getInt(INDEX_HARVEST_ID));
                     ungradedHarvests.add(data.getInt(INDEX_HARVEST_ID));
                 }
                 data.moveToPrevious();
             }
             // disable mFab and checkbox if there's no harvests left to be graded
-            Log.i(TAG, "ungraded: " + ungradedHarvests.size());
             if (ungradedHarvests.size() == 0) {
                 //mFab.setEnabled(false);
                 mCheckBox.setVisibility(View.INVISIBLE);
@@ -332,7 +296,7 @@ public class HarvestActivity extends AppCompatActivity
     private void setupWeighingUi() {
         setContentView(R.layout.activity_weighing);
 
-        mUserInputCatch = (EditText) findViewById(R.id.catch_edit_text);
+        mUserInputCatch = findViewById(R.id.catch_edit_text);
         ((TextView) findViewById(R.id.user)).setText(
                 getString(R.string.user_logged_in, mGoogleAccount.getDisplayName()));
         mUserInputCatch.setOnTouchListener(this);
@@ -340,7 +304,7 @@ public class HarvestActivity extends AppCompatActivity
 
     private void setupGradingUi() {
         setContentView(R.layout.activity_grading);
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view_harvest_log);
+        recyclerView = findViewById(R.id.recycler_view_harvest_log);
         //recyclerView.smoothScrollToPosition(0);
 
         mLogAdapter = new HarvestLogAdapter(this);
@@ -352,13 +316,13 @@ public class HarvestActivity extends AppCompatActivity
         recyclerView.setAdapter(mLogAdapter);
         recyclerView.setOnTouchListener(this);
 
-        mSpinnerHarvestNo = (Spinner) findViewById(R.id.spinner_harvest_no);
+        mSpinnerHarvestNo = findViewById(R.id.spinner_harvest_no);
         mSpinnerHarvestNo.setFocusable(true);
         //mSpinnerHarvestNo.setFocusableInTouchMode(true);
 
-        mEditTextSuperJumbo = (EditText) findViewById(R.id.super_jumbo_et);
-        mEditTextJumbo = (EditText) findViewById(R.id.jumbo_et);
-        mEditTextLarge = (EditText) findViewById(R.id.large_et);
+        mEditTextSuperJumbo = findViewById(R.id.super_jumbo_et);
+        mEditTextJumbo = findViewById(R.id.jumbo_et);
+        mEditTextLarge = findViewById(R.id.large_et);
 
         mSpinnerHarvestNo.setOnTouchListener(this);
         mEditTextSuperJumbo.setOnTouchListener(this);
@@ -381,7 +345,7 @@ public class HarvestActivity extends AppCompatActivity
         } else if (mCredential.getSelectedAccountName() == null) {
             mCredential.setSelectedAccountName(mGoogleAccount.getAccount().name);
         } else if (!isDeviceOnline()) {
-            Toast.makeText(this, "No Internet connection", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.connection_error), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -392,7 +356,7 @@ public class HarvestActivity extends AppCompatActivity
         int selectedHarvestNo = (Integer) mSpinnerHarvestNo.getSelectedItem();
 
         if (mExistingRows.getValues() == null) {
-            toastFromThread("Failed to read the online spreadsheet");
+            toastFromThread(getString(R.string.error_reading_sheet));
 
             supportFinishAfterTransition();
             finish();
@@ -427,11 +391,11 @@ public class HarvestActivity extends AppCompatActivity
         gradingData.add(getDate());
         //gradingData.add(getTime());
         // catchData.add(location);
-        gradingData.add(large + " kg");
-        gradingData.add(jumbo + " kg");
-        gradingData.add(superJumbo + " kg");
+        gradingData.add(getString(R.string.measure_in_kg, large));
+        gradingData.add(getString(R.string.measure_in_kg, jumbo));
+        gradingData.add(getString(R.string.measure_in_kg, superJumbo));
         gradingData.add(mGoogleAccount.getDisplayName());
-        gradingData.add(loss + " kg");
+        gradingData.add(getString(R.string.measure_in_kg_int, loss));
 
         values.add(gradingData);
 
@@ -444,7 +408,7 @@ public class HarvestActivity extends AppCompatActivity
         String toastMessage;
 
         if (mService == null || !Utils.workingConnection(this)) {
-            toastMessage = "Failed to register catch! Check connection";
+            toastMessage = getString(R.string.error_register_failed_connection);
             toastFromThread(toastMessage);
             finish();
             return;
@@ -458,12 +422,9 @@ public class HarvestActivity extends AppCompatActivity
             Log.i(TAG, e.getMessage());
         }
 
-        showSummaryDialog();
-        Log.i(TAG, "new value 0: " + values.get(0) + "\n" + mExistingRows.getValues().get(selectedHarvestNo));
         mExistingRows.getValues().add(selectedHarvestNo, values.get(0));
-        Log.i(TAG, "new value 0: " + values.get(0) + "\n" + mExistingRows.getValues().get(selectedHarvestNo));
         HarvestUtils.updateDbSingle(this, valueRange, selectedHarvestNo);
-        toastMessage = "Harvest number " + selectedHarvestNo + " graded";
+        toastMessage = getString(R.string.toast_harvest_graded, selectedHarvestNo);
         toastFromThread(toastMessage);
         finish();
     }
@@ -474,16 +435,12 @@ public class HarvestActivity extends AppCompatActivity
         range = "sheet4!A1:F1";
 
         int harvestNum;
-        Log.i(TAG, "mExistingRows.getValues == null " + (mExistingRows == null));
         if (mExistingRows == null || mExistingRows.getValues() == null) {
-            toastFromThread("Failed to read the spreadsheet");
             finish();
             return;
         } else harvestNum = mExistingRows.getValues().size();
-        // TODO can be null, Må updatere mExistingRows etter registrering
 
         List<List<Object>> values = new ArrayList<>();
-
         List<Object> catchData = new ArrayList<>();
 
         String location = null;
@@ -500,7 +457,7 @@ public class HarvestActivity extends AppCompatActivity
         catchData.add(getDate());
         catchData.add(getTime());
         catchData.add(location);
-        catchData.add(snailCatch + " kg");
+        catchData.add(getString(R.string.measure_in_kg, snailCatch));
         catchData.add(mGoogleAccount.getDisplayName());
 
         values.add(catchData);
@@ -512,11 +469,8 @@ public class HarvestActivity extends AppCompatActivity
         valueRange.setValues(values);
 
         String toastMessage;
-        Log.i(TAG, "mService Null i WEIGING? " + (mService == null));
         if (mService == null || !Utils.workingConnection(this)) {
-
-            Log.i(TAG, "mService Null, fnish");
-            toastMessage = "Failed to register catch! Check connection";
+            toastMessage = getString(R.string.error_register_failed_connection);
             toastFromThread(toastMessage);
             finish();
             return;
@@ -534,12 +488,10 @@ public class HarvestActivity extends AppCompatActivity
             return;
 
         }
-
-        showSummaryDialog(); // TODO?
         // updating the db immediately in order for the log to get updated (clumsy?)
         mExistingRows.getValues().add(harvestNum, values.get(0));
         HarvestUtils.updateDb(this, mExistingRows);
-        toastMessage = "Harvest number " + harvestNum + " added";
+        toastMessage = getString(R.string.toast_harvest_added, harvestNum);
         toastFromThread(toastMessage);
         finish();
     }
@@ -569,15 +521,15 @@ public class HarvestActivity extends AppCompatActivity
     }
 
     private String confirmationAttr(EditText editText) {
-        return TextUtils.isEmpty(editText.getText()) ? "-" : editText.getText() + " kg";
+        return TextUtils.isEmpty(editText.getText()) ? "-" : getString(R.string.measure_in_kg, editText.getText());
     }
 
     private void showConfirmationDialog() {
         String msg;
         if (mGradingMode)
-            msg = "Super Jumbo: " + confirmationAttr(mEditTextSuperJumbo) + "\nJumbo: " +
-                    confirmationAttr(mEditTextJumbo) + "\nLarge: " + confirmationAttr(mEditTextLarge);
-        else msg = "Total weight: " + confirmationAttr(mUserInputCatch);
+            msg = getString(R.string.grade_confirmation,
+                    confirmationAttr(mEditTextSuperJumbo), confirmationAttr(mEditTextJumbo), confirmationAttr(mEditTextLarge));
+        else msg = getString(R.string.weight_confirmation, confirmationAttr(mUserInputCatch));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Confirm registration")
@@ -613,10 +565,6 @@ public class HarvestActivity extends AppCompatActivity
         alert.show();
 
 
-    }
-
-    private void showSummaryDialog() {
-        //TODO
     }
 
 
@@ -782,7 +730,6 @@ public class HarvestActivity extends AppCompatActivity
         if (v instanceof Spinner) {
             mSpinnerHarvestNo.requestFocus();
             mSpinnerHarvestNo.performClick();
-            Log.i(TAG, "instance of Spinner");
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
 
@@ -820,7 +767,7 @@ public class HarvestActivity extends AppCompatActivity
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        showSnackbar(getString(R.string.connection_error));
     }
 
 }

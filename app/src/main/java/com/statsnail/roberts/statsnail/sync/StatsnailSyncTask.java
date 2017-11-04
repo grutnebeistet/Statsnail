@@ -28,7 +28,7 @@ public class StatsnailSyncTask {
             ContentValues[] tidesData = NetworkUtils.loadNearbyXml(context, tidesRequestUrl);
 
             String windsRequestUrl = NetworkUtils.buildWindsRequestUrl(context);
-
+           // ContentValues[] windsData = NetworkUtils.loadWindsXml(windsRequestUrl);
             Timber.d("winds url : " + windsRequestUrl);
             for (ContentValues tides : tidesData) {
                 // tides.put("TODO");
