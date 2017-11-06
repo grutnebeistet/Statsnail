@@ -95,7 +95,11 @@ public class MainActivityFull extends AppCompatActivity {
         setContentView(R.layout.activity_main_full);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
-        setSupportActionBar(mToolbar);
+      //  setSupportActionBar(mToolbar);
+        if (mToolbar != null) {
+            setSupportActionBar(mToolbar);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (!Utils.isGPSEnabled(this)) {

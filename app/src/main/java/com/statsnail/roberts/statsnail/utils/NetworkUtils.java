@@ -39,10 +39,6 @@ public final class NetworkUtils {
     private final static String TIDES_LANGUAGE_SUFFIX = "&interval=60&dst=0&tzone=1&tide_request=locationdata";
     static Location mLocation;
 
-    public static void updateTidesData(Context context, Location location) {
-
-    }
-
     public static String buildTidesRequestUrl(Context context) {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
         String latitude = preference.getString(

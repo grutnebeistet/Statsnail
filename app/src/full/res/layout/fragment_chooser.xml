@@ -13,6 +13,7 @@
         android:layout_height="200dp"
         android:id="@+id/logo_bg"
         android:src="@drawable/ic_logo"
+        android:focusable="false"
         android:transitionName="logo_transition"
         android:layout_marginTop="64dp"
         android:layout_centerHorizontal="true"/>

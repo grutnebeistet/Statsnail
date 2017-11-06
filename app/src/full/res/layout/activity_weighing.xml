@@ -8,11 +8,13 @@
     android:background="@color/harvest_background"
     android:gravity="center_vertical">
 
+    <include layout="@layout/app_bar" />
+
     <android.support.v7.widget.CardView
         android:id="@+id/cardview_container_c"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/app_bar_layout"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
@@ -51,7 +53,8 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:layout_marginTop="11dp"
-                    android:text="Fytti katta" />
+                    android:text="Fytti katta"
+                    android:textStyle="italic" />
 
                 <TextView
                     android:id="@+id/editText"
@@ -74,9 +77,10 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_margin="@dimen/fab_margin"
+        android:contentDescription="@string/content_desc_weighing_fab"
         android:scaleType="center"
         android:src="@android:drawable/ic_menu_add"
-        app:elevation="4dp" />
+        app:elevation="6dp" />
 
 
     <android.support.v7.widget.CardView
@@ -101,60 +105,48 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/cardview_container_c"
+            android:layout_marginBottom="16dp"
             android:gravity="center_horizontal"
             android:orientation="horizontal"
-            android:paddingTop="16dp"
-            android:layout_marginBottom="16dp">
+            android:paddingTop="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
-                android:paddingRight="16dp"
+                android:paddingRight="@dimen/padding"
                 android:text="Catch: "
-                android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Headline"
                 android:textColor="@color/colorAccent" />
 
-            <RelativeLayout
-                android:layout_width="160dp"
-                android:layout_height="wrap_content">
+            <EditText
+                android:id="@+id/catch_edit_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/content_desc_catch_weight"
+                android:hint="@string/edit_text_hint"
+                android:inputType="number"
+                android:maxLength="9"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Headline"
+                android:textColor="@android:color/black" />
 
-                <EditText
-                    android:id="@+id/catch_edit_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/edit_text_hint"
-                    android:inputType="number"
-                    android:maxLength="9"
-                    android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
-                    android:textColor="@android:color/black" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:layout_marginRight="8dp"
-                    android:paddingTop="16dp"
-                    android:text="kg"
-                    android:textColor="#91917f" />
-            </RelativeLayout>
-
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignRight="@id/catch_edit_text"
+                android:layout_marginLeft="@dimen/padding"
+                android:layout_marginRight="8dp"
+                android:contentDescription="@string/content_desc_kg_label"
+                android:paddingTop="16dp"
+                android:text="@string/kg_as_measure"
+                android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+                android:textColor="#91917f" />
             <CheckBox
                 android:id="@+id/confirm_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/userinput"
                 android:layout_marginLeft="8dp"
                 android:buttonTint="@color/colorAccent" />
-
-            <!--      <Button
-                      android:id="@+id/reg_catch_button"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:layout_gravity="center"
-                      android:layout_margin="16dp"
-                      android:text="Reg fangst" />-->
-
         </LinearLayout>
     </android.support.v7.widget.CardView>
 </RelativeLayout>

@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.tab_layout)
     TabLayout mTabs;
-    @BindView(R.id.toolbar)
-    Toolbar mToolbar;
+   /* @BindView(R.id.toolbar)
+    Toolbar mToolbar;*/
     /**
      * Provides the entry point to the Fused Location Provider API.
      */
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
-        setSupportActionBar(mToolbar);
+        //setSupportActionBar(mToolbar);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (!Utils.isGPSEnabled(this)) {

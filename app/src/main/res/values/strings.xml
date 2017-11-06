@@ -39,4 +39,16 @@
     <string name="style_label_default">Default</string>
     <string name="style_choose">Choose style</string>
     <string name="style_set_to">Style set to: %1$s</string>
+
+    <!--    Content Description    -->
+    <string name="content_desc_location">Location name</string>
+    <string name="content_desc_date">Date</string>
+    <string name="content_desc_tide_flag">Tide flag</string>
+    <string name="content_desc_tide_time">Time of tide</string>
+    <string name="content_desc_tide_level">Water level in cm</string>
+    <string name="content_desc_tide_img">Tide flag image</string>
+    <string name="content_desc_location_icon">Reset Location</string>
+    <string name="content_desc_previous_day">Previous day</string>
+    <string name="content_desc_next_day">Next day</string>
+    <string name="content_desc_error">Error message</string>
 </resources>

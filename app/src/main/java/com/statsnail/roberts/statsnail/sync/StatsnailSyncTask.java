@@ -44,8 +44,6 @@ public class StatsnailSyncTask {
                         null, null);
 
                 resolver.bulkInsert(TidesContract.TidesEntry.CONTENT_URI, tidesData);
-
-                // TODO check if less than 3 hours till low tide (notify)?
             }
 
         } catch (Exception e) {

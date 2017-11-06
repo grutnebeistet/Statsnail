@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.firebase.jobdispatcher.JobParameters;
+import com.statsnail.roberts.statsnail.utils.NetworkUtils;
 
 /**
  * Created by Adrian on 28/10/2017.
@@ -20,8 +21,7 @@ public class FirebaseJobService extends com.firebase.jobdispatcher.JobService {
             @Override
             protected Void doInBackground(Void... params) {
                 Context context = getApplicationContext();
-                //NetworkUtils.updateTidesData(context);
-
+                StatsnailSyncTask.syncData(context);
                 return null;
             }
 

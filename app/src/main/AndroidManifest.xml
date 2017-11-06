@@ -42,7 +42,8 @@
                         <category android:name="android.intent.category.LAUNCHER" />
                     </intent-filter>-->
         </activity>
-        <activity android:name=".activities.SettingsActivity"/>
+        <activity android:name=".activities.SettingsActivity" />
+
         <service
             android:name=".sync.FirebaseJobService"
             android:exported="false">
@@ -52,10 +53,25 @@
         </service>
         <service
             android:name=".sync.NotifyService"
-            android:exported="false"></service>
+            android:exported="false" />
         <service
             android:name=".sync.StatsnailSyncIntentService"
             android:exported="false" />
+
+        <receiver
+            android:name=".widget.TidesWidgetProvider"
+            android:label="Todays tides">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_provider_info" />
+        </receiver>
+
+        <service
+            android:name=".widget.TidesWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 
 </manifest>

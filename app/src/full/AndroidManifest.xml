@@ -2,6 +2,7 @@
     package="com.statsnail.roberts.statsnail">
 
     <application>
+
         <provider
             android:name=".data.LogContentProvider"
             android:authorities="@string/content_authority_full"
@@ -12,10 +13,12 @@
 
         <activity
             android:name=".activities.HarvestActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".activities.MainActivityFull"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 </manifest>

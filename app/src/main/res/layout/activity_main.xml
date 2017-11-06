@@ -36,6 +36,7 @@
         android:layout_height="20dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
+        android:contentDescription="@string/content_desc_location_icon"
         android:layout_margin="22dp"
         android:layout_below="@+id/toolbar"
         android:src="@drawable/current_location" />

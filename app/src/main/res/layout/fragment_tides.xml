@@ -8,7 +8,6 @@
     android:layout_height="match_parent"
     android:background="@color/transparent">
 
-
     <android.support.v7.widget.CardView
         android:id="@+id/cardview_container"
         android:layout_width="match_parent"
@@ -49,6 +48,9 @@
                     android:layout_height="36dp"
                     android:layout_gravity="start|center_vertical"
                     android:paddingRight="4dp"
+                    android:nextFocusForward="@+id/image_button_curr_loc"
+                    android:nextFocusRight="@drawable/next_day"
+                    android:nextFocusUp="@drawable/current_location"
                     android:visibility="invisible">
 
                     <ImageView
@@ -56,6 +58,7 @@
                         android:layout_height="18dp"
                         android:layout_alignParentStart="true"
                         android:layout_centerInParent="true"
+                        android:contentDescription="@string/content_desc_previous_day"
                         android:src="@drawable/prev_day" />
                 </RelativeLayout>
 
@@ -65,6 +68,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:layout_weight="9"
+                    android:contentDescription="@string/content_desc_location"
                     android:gravity="center"
                     android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
                     tools:text="Trondheim" />
@@ -75,6 +79,9 @@
                     android:layout_height="36dp"
                     android:layout_gravity="end|center_vertical"
                     android:paddingLeft="4dp"
+                    android:nextFocusForward="@+id/prev_day_button"
+                    android:nextFocusLeft="@drawable/prev_day"
+                    android:nextFocusUp="@drawable/current_location"
                     android:visibility="invisible">
 
                     <ImageView
@@ -82,6 +89,7 @@
                         android:layout_height="18dp"
                         android:layout_alignParentEnd="true"
                         android:layout_centerInParent="true"
+                        android:contentDescription="@string/content_desc_next_day"
                         android:src="@drawable/next_day" />
                 </RelativeLayout>
 
@@ -92,6 +100,7 @@
                 android:id="@+id/forecast_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/content_desc_date"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/title_ll"
@@ -115,21 +124,24 @@
                 app:layout_constraintRight_toRightOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/forecast_date">
 
-                <TextView
-                    android:id="@+id/tides_error_tv"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center_horizontal"
-                    android:gravity="center"
-                    android:padding="16dp"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                    tools:text="Too far away dammitdsdf sdfs dfsdfds sd dfsdfdsf" />
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/tides_recycler_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </FrameLayout>
+
+            <TextView
+                android:id="@+id/tides_error_tv"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:contentDescription="@string/content_desc_error"
+                android:gravity="center"
+                android:padding="16dp"
+                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                android:textStyle="italic"
+                tools:text="Too far away dammitdsdf sdfs dfsdfds sd dfsdfdsf" />
 
             <View
                 android:id="@+id/divider_list_item"
@@ -146,6 +158,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
+                android:focusable="false"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
@@ -163,12 +176,15 @@
 
     <ImageView
         android:id="@+id/image_button_curr_loc"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_above="@id/cardview_container"
         android:layout_alignEnd="@+id/cardview_container"
-        android:layout_alignTop="@+id/button_notify"
+        android:layout_marginBottom="@dimen/padding_double"
         android:background="@color/cardview_shadow_start_color"
-        android:padding="4dp"
+        android:contentDescription="@string/content_desc_location_icon"
+        android:nextFocusForward="@+id/map"
+        android:nextFocusUp="@+id/tab_layout"
         android:src="@drawable/current_location" />
 
     <Button
@@ -178,6 +194,7 @@
         android:layout_above="@+id/cardview_container"
         android:layout_alignStart="@+id/cardview_container"
         android:layout_marginStart="12dp"
+        android:contentDescription="test button todo:delete"
         android:text="notify Tezt"
         android:visibility="invisible" />
 </RelativeLayout>

@@ -86,7 +86,7 @@ public final class Utils {
 
     // Returns a time string in hh:mm from millisecs
     public static String getTime(long millis) {
-        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("hh:mm", Locale.getDefault());
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("HH:mm", Locale.getDefault());
         Date date = new Date(millis);
 
         return dateFormat.format(date);

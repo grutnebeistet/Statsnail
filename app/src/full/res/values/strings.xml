@@ -20,11 +20,35 @@
     <string name="error_register_failed">Failed to register catch!</string>
     <string name="toast_harvest_graded" formatted="true">Harvest number %d graded</string>
     <string name="toast_harvest_added" formatted="true">Harvest number %d registered</string>
+    <string name="kg_as_measure">Kg</string>
     <string name="measure_in_kg" formatted="true">%s Kg</string>
     <string name="measure_in_kg_int" formatted="true">%x Kg</string>
     <string name="error_reading_sheet">Failed to read the online spreadsheet</string>
+    <string name="harvest_number">Harvest No.</string>
+    <string name="grading_button">GRADING</string>
+    <string name="weighing_button">WEIGHING</string>
 
     <!--Dialog-->
     <string name="grade_confirmation">Super Jumbo: %s\nJumbo: %s\nLarge: %s</string>
     <string name="weight_confirmation">Total weight: %s</string>
+
+    <!--    Content Description    -->
+    <string name="content_desc_weighing_button">Enter weighing activity</string>
+    <string name="content_desc_grading_button">Enter grading activity</string>
+    <string name="content_desc_user">Signed in user</string>
+    <string name="content_desc_weighing_head">Weighing header</string>
+    <string name="content_desc_catch_label">Catch label</string>
+    <string name="content_desc_catch_weight">Catch weight is entered here</string>
+    <string name="content_desc_catch_checkbox">Confirm weight Checkbox</string>
+    <string name="content_desc_weighing_fab">Press to Add catch</string>
+    <string name="content_desc_kg_label">Weights measured in kilos</string>
+
+    <string name="content_desc_grading_head">Grading header</string>
+    <string name="content_desc_super_label">Super jumbo label</string>
+    <string name="content_desc_jumbo_label">Jumbo label</string>
+    <string name="content_desc_large_label">Large label</string>
+    <string name="content_desc_harvno_label">Harvest number label</string>
+    <string name="content_desc_grade_weight">Weight input</string>
+    <string name="content_desc_spinner">Spinner containing harvest numbers</string>
+    <string name="content_desc_log_list">List of logs</string>
 </resources>

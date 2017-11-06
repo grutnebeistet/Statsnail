@@ -16,11 +16,14 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -267,7 +270,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                 testNot();
             }
         });
-
         return view;
     }
 
@@ -324,11 +326,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
             return;
         }
     }
-
-//    @Override
-//    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-//
-//    }
 
     @Override
     public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {

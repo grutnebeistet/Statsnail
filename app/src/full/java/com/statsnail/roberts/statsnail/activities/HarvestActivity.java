@@ -20,17 +20,16 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.NumberPicker;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -130,6 +129,9 @@ public class HarvestActivity extends AppCompatActivity
     FloatingActionButton mFab;
     @BindView(R.id.confirm_checkbox)
     CheckBox mCheckBox;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+
 
     /**
      * This activity runs either in Weighing or Grading mode
@@ -139,6 +141,7 @@ public class HarvestActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         mSharedPreferences = this.getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
         mGoogleAccount = (GoogleSignInAccount) getIntent().getExtras().get("GoogleSignInAccount");
         mLocation = getIntent().getExtras().getParcelable("location");
@@ -148,6 +151,17 @@ public class HarvestActivity extends AppCompatActivity
         if (mWeighingMode) setupWeighingUi();
         else if (mGradingMode) setupGradingUi();
         ButterKnife.bind(this);
+        if (mToolbar != null) {
+            setSupportActionBar(mToolbar);
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            mToolbar.setNavigationIcon(R.drawable.ic_arrow_back);
+            mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
 
         mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(),
                 Arrays.asList(SCOPES)).setBackOff(new ExponentialBackOff())
