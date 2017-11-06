@@ -91,8 +91,10 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     CardView mContainer;
     @BindView(R.id.image_button_curr_loc)
     ImageView mResetLoc;
-    @BindView(R.id.button_notify)
-    Button satanisme;
+    @BindView(R.id.next_day_image)
+    ImageView mNextDayImg;
+    @BindView(R.id.prev_day_image)
+    ImageView mPrevDayImg;
 
     private static final int LOADER_ID_TIDES = 1349;
     private static final int LOADER_ID_WINDS = 1350;
@@ -115,6 +117,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     String TAG = TidesFragment.class.getSimpleName();
     private static final String SELECTED_STYLE = "selected_style";
 
+    private static final int FORECAST_DAYS = 7;
     private GoogleMap mMap = null;
     // Stores the ID of the currently selected style, so that we can re-apply it when
     // the activity restores state, for example when the device changes orientation.
@@ -137,6 +140,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     private TidesData mTidesData;
 
     SharedPreferences mPreferences;
+    Cursor mCursor;
 
     public static TidesFragment newInstance(Location location) {
         Bundle args = new Bundle();
@@ -175,19 +179,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         updateValuesOnLocationChange();
     }
 
-    private void testNot() {
-        Intent myIntent = new Intent(getActivity(), NotifyService.class);
-        myIntent.putExtra("nextLowTideTime", System.currentTimeMillis() + TimeUnit.HOURS.toMillis(3));
-        myIntent.putExtra("nextHighTideTime", System.currentTimeMillis() + TimeUnit.HOURS.toMillis(10));
-
-        AlarmManager alarmManager = (AlarmManager) getActivity().getSystemService(ALARM_SERVICE);
-        PendingIntent pendingIntent = PendingIntent.getService(getActivity().getApplicationContext(), 0, myIntent, 0);
-
-        long notificationTime = System.currentTimeMillis();
-
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
-    }
-
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -210,19 +201,28 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                 String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                         Utils.getDate(System.currentTimeMillis()));
                 try {
-                    String updateDate = Utils.getDatePlusOne(currentDate);
-                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, updateDate).apply();
-                    getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
+                    String tomorrow = Utils.getDatePlusOne(currentDate);
+
+                    if (Utils.isTomorrowLast(tomorrow)) {
+                        mNextDayImg.setVisibility(View.GONE);
+                        return;
+                    } else {
+                        mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, tomorrow).apply();
+                        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
+                    }
+
+
                 } catch (ParseException e) {
                     Timber.e("failed to increase date");
                     e.printStackTrace();
                 }
-                mPrevDay.setVisibility(View.VISIBLE);
+                mPrevDayImg.setVisibility(View.VISIBLE);
             }
         });
         mPrevDay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                         Utils.getDate(System.currentTimeMillis()));
                 try {
@@ -244,8 +244,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         Timber.d("onResume");
         if (!Utils.workingConnection(getActivity())) {
             Timber.d("noConnect");
-            mNextDay.setVisibility(View.INVISIBLE);
-            mPrevDay.setVisibility(View.INVISIBLE);
+            mNextDayImg.setVisibility(View.INVISIBLE);
+            mPrevDayImg.setVisibility(View.INVISIBLE);
             showSnackbar(getString(R.string.connection_error));
         }
     }
@@ -264,12 +264,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         ButterKnife.bind(this, view);
         mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mTidesRecyclerView.setAdapter(mAdapter);
-        satanisme.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                testNot();
-            }
-        });
         return view;
     }
 
@@ -291,29 +285,29 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     @Override
     public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor cursor) {
         mContainer.setVisibility(View.VISIBLE);
-
+        Timber.d("Cursor count: " + cursor.getCount() + " position: " + cursor.getPosition());
         String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                 Utils.getDate(System.currentTimeMillis()));
         if (currentDate.compareTo(Utils.getDate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1))) < 0) {
-            mPrevDay.setVisibility(View.INVISIBLE);
+            mPrevDayImg.setVisibility(View.INVISIBLE);
         }
+
         if (cursor == null || cursor.getCount() == 0) {
             mErrorTextView.setVisibility(View.VISIBLE);
             mErrorTextView.setText(R.string.connection_error);
 
-            mNextDay.setVisibility(View.INVISIBLE);
-        } else if (cursor.getCount() == 1) {
+            mNextDayImg.setVisibility(View.INVISIBLE);
+        } else if (cursor.getCount() <= 2) {
             cursor.moveToFirst();
             mErrorTextView.setVisibility(View.VISIBLE);
             mErrorTextView.setText(cursor.getString(INDEX_ERROR));
             //  Toast.makeText(getActivity(), "Error: " + cursor.getString(INDEX_ERROR), Toast.LENGTH_SHORT).show();
-            mNextDay.setVisibility(View.INVISIBLE);
+            mNextDayImg.setVisibility(View.INVISIBLE);
             mAdapter.swapCursor(null);
-        } else if (cursor.isLast()) mNextDay.setVisibility(View.INVISIBLE);
-        else {
+        } else {
             mAdapter.swapCursor(cursor);
             mErrorTextView.setVisibility(View.GONE);
-            mNextDay.setVisibility(View.VISIBLE);
+            mNextDayImg.setVisibility(View.VISIBLE);
         }
         try {
             mLocationTextView.setText(Utils.getPlaceName(getActivity()));

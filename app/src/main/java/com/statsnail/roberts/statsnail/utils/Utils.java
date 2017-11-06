@@ -64,6 +64,7 @@ public final class Utils {
     }
 
 
+
     // returns a date string of the day after param
     public static String getDatePlusOne(String oldDate) throws ParseException {
 //        Timber.d("Date in: " + oldDate + ", plus " + TimeUnit.DAYS.toMillis(1) + ", return: " +
@@ -111,7 +112,14 @@ public final class Utils {
         Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " = " + notifyOnNext);
         return lowTideHours >= currentHours;
     }
+    // returns true if tomorrow is last day of forecast
+    public static boolean isTomorrowLast(String dateString) throws ParseException {
+        long now = System.currentTimeMillis();
+        long last = now + TimeUnit.DAYS.toMillis(6);
+        long testDate = getDateInMillisec(dateString);
 
+        return (testDate + TimeUnit.DAYS.toMillis(1) >= last);
+    }
     // Returns a String of remaining time in hours and/or minutes given a time in millisec
     public static String getRemainingTime(long rawTime) {
         long millisLeft = rawTime - System.currentTimeMillis();
