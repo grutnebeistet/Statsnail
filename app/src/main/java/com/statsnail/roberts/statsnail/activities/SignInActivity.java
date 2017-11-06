@@ -45,7 +45,7 @@ public class SignInActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_sign_in);
 
         // Views
-        mStatusTextView = (TextView) findViewById(R.id.status);
+        mStatusTextView = findViewById(R.id.status);
 
         // Button listeners
         findViewById(R.id.sign_in_button).setOnClickListener(this);
@@ -144,7 +144,7 @@ public class SignInActivity extends AppCompatActivity implements
         } else {
             // Signed out, show unauthenticated UI.
             // Toast.makeText(this, "Failed to sign in", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "result::: " + result.toString());
+            Log.d(TAG, "result::: " + result.toString() + " status: " + result.getStatus());
             updateUI(false);
         }
     }
