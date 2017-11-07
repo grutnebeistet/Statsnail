@@ -57,7 +57,7 @@ public class HarvestLogAdapter extends RecyclerView.Adapter<HarvestLogAdapter.Lo
             holder.tvLogGradedBy.setText(graded);
             holder.tvLogGradedBy.setTextColor(Color.RED);
         }
-        holder.tvLogItemNo.setText(""+harvestID); // TODO res string w/placeholder
+        holder.tvLogItemNo.setText(String.valueOf(harvestID));
         holder.tvLogDate.setText(gradedDate);
         Log.i(TAG, "adapter, name: " + name);
 
@@ -75,9 +75,9 @@ public class HarvestLogAdapter extends RecyclerView.Adapter<HarvestLogAdapter.Lo
         LogViewHolder(View view) {
             super(view);
 
-            tvLogItemNo = (TextView)view.findViewById(R.id.ll_harvest_no);
-            tvLogDate = (TextView)view.findViewById(R.id.ll_harvest_date);
-            tvLogGradedBy = (TextView)view.findViewById(R.id.li_log_graded);
+            tvLogItemNo = view.findViewById(R.id.ll_harvest_no);
+            tvLogDate = view.findViewById(R.id.ll_harvest_date);
+            tvLogGradedBy = view.findViewById(R.id.li_log_graded);
         }
     }
     public void swapCursor(Cursor newData){

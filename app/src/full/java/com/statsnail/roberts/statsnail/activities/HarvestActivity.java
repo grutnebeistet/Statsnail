@@ -131,7 +131,15 @@ public class HarvestActivity extends AppCompatActivity
     CheckBox mCheckBox;
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
-
+    private static final String JUMBO = "jumbo";
+    private static final String SUPER_JUMBO = "super_jumbo";
+    private static final String LARGE = "large";
+    private static final String SELECTED_HARVEST = "sel_harvest";
+    private static final String TOTAL_WEIGHT = "total_weight";
+    private static final String CHECKBOX_CHECKED = "checkbox";
+    private static final String LOCATION = "location";
+    private static final String SIGN_IN = "GoogleSignInAccount";
+    private int mSpinnerPosition = 0;
 
     /**
      * This activity runs either in Weighing or Grading mode
@@ -143,14 +151,31 @@ public class HarvestActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
 
         mSharedPreferences = this.getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        mGoogleAccount = (GoogleSignInAccount) getIntent().getExtras().get("GoogleSignInAccount");
-        mLocation = getIntent().getExtras().getParcelable("location");
+        try {
+            mGoogleAccount = (GoogleSignInAccount) getIntent().getExtras().get(SIGN_IN);
+            mLocation = getIntent().getExtras().getParcelable(LOCATION);
+        } catch (NullPointerException ne) {
+            ne.printStackTrace();
+        }
         mWeighingMode = mSharedPreferences.getBoolean(getString(R.string.logging_mode_weighing), false);
         mGradingMode = mSharedPreferences.getBoolean(getString(R.string.logging_mode_grading), false);
 
         if (mWeighingMode) setupWeighingUi();
         else if (mGradingMode) setupGradingUi();
         ButterKnife.bind(this);
+        if (savedInstanceState != null) {
+            if (mGradingMode) {
+                mEditTextLarge.setText(savedInstanceState.getString(LARGE));
+                mEditTextJumbo.setText(savedInstanceState.getString(JUMBO));
+                mEditTextSuperJumbo.setText(savedInstanceState.getString(SUPER_JUMBO));
+                // mSpinnerHarvestNo.setSelection(savedInstanceState.getInt(SELECTED_HARVEST));
+                mSpinnerPosition = savedInstanceState.getInt(SELECTED_HARVEST);
+                Timber.d("saved selection: " + savedInstanceState.getInt(SELECTED_HARVEST));
+            }
+            if (mWeighingMode) mUserInputCatch.setText(savedInstanceState.getString(TOTAL_WEIGHT));
+
+            mCheckBox.setChecked(savedInstanceState.getBoolean(CHECKBOX_CHECKED));
+        }
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -165,7 +190,7 @@ public class HarvestActivity extends AppCompatActivity
 
         mCredential = GoogleAccountCredential.usingOAuth2(getApplicationContext(),
                 Arrays.asList(SCOPES)).setBackOff(new ExponentialBackOff())
-                .setSelectedAccountName(mGoogleAccount.getAccount().name);
+                .setSelectedAccountName(mGoogleAccount.getAccount() != null ? mGoogleAccount.getAccount().name : "Username not available");
 
         HttpTransport transport = AndroidHttp.newCompatibleTransport();
         JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
@@ -297,6 +322,7 @@ public class HarvestActivity extends AppCompatActivity
             adapter.notifyDataSetChanged();
 
             mSpinnerHarvestNo.setAdapter(adapter);
+            mSpinnerHarvestNo.setSelection(mSpinnerPosition);
         }
         mLogAdapter.swapCursor(data);
     }
@@ -343,6 +369,22 @@ public class HarvestActivity extends AppCompatActivity
         mEditTextJumbo.setOnTouchListener(this);
         mEditTextLarge.setOnTouchListener(this);
 
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (mGradingMode) {
+            outState.putString(JUMBO, mEditTextJumbo.getText().toString());
+            outState.putString(SUPER_JUMBO, mEditTextSuperJumbo.getText().toString());
+            outState.putString(LARGE, mEditTextLarge.getText().toString());
+            outState.putInt(SELECTED_HARVEST, mSpinnerHarvestNo.getSelectedItemPosition());
+            Timber.d("SAVING selection: " + mSpinnerHarvestNo.getSelectedItemPosition());
+        }
+        if (mWeighingMode) outState.putString(TOTAL_WEIGHT, mUserInputCatch.getText().toString());
+        outState.putBoolean(CHECKBOX_CHECKED, mCheckBox.isChecked());
+        Timber.d("saving checbox checked: " + mCheckBox.isChecked());
+        super.onSaveInstanceState(outState);
     }
 
     /**
@@ -394,6 +436,7 @@ public class HarvestActivity extends AppCompatActivity
 
         int loss = registeredCatch - (Integer.valueOf(large) + Integer.valueOf(jumbo) + Integer.valueOf(superJumbo));
 
+        Timber.d("loss: " + loss + " regC: " + registeredCatch);
         String currentHarvestNo = String.valueOf(selectedHarvestNo + 1); // +1 cos row 1 == labels
         range = "sheet4!G" + currentHarvestNo + ":L" + currentHarvestNo; //TODO R.string
 
@@ -600,10 +643,7 @@ public class HarvestActivity extends AppCompatActivity
         switch (requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
-                    //  mOutputText.setText( //TODO
-                    //         "This app requires Google Play Services. Please install " +
-                    //               "Google Play Services on your device and relaunch this app.");
-                    Toast.makeText(this, "Install Google Play Services", Toast.LENGTH_SHORT).show();
+                    showSnackbar(getString(R.string.common_google_play_services_enable_text));
                 } else {
                     getResultsFromApi();
                 }
@@ -612,8 +652,6 @@ public class HarvestActivity extends AppCompatActivity
                 if (resultCode == RESULT_OK && data != null &&
                         data.getExtras() != null) {
                     String accountName = mGoogleAccount.getAccount().name;
-                    // data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                    Log.i(TAG, "onActResult" + "accName1: " + accountName + "\naccName2: " + mGoogleAccount.getAccount().name);
                     if (accountName != null) {
                         SharedPreferences settings =
                                 getPreferences(Context.MODE_PRIVATE);
@@ -745,7 +783,11 @@ public class HarvestActivity extends AppCompatActivity
             mSpinnerHarvestNo.requestFocus();
             mSpinnerHarvestNo.performClick();
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            try {
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            } catch (NullPointerException ne) {
+                ne.printStackTrace();
+            }
 
             //  imm.hideSoftInputFromWindow(v.getWindowToken(), 0); // TODO forenkling ang edittexts?
         }
@@ -761,14 +803,14 @@ public class HarvestActivity extends AppCompatActivity
         if (mExitWithoutPrompt) HarvestActivity.this.finish();
         else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("Discard?")
+            builder.setMessage(getString(R.string.discard))
                     .setCancelable(false)
-                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             HarvestActivity.this.finish();
                         }
                     })
-                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    .setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                         }

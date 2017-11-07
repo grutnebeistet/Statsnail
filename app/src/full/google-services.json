@@ -15,14 +15,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "581359857378-ji4cj309e3ua1bu35b6tufdr1qmu7u5v.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.statsnail.roberts.statsnail",
-            "certificate_hash": "8039e297bb159c49fd956c49b9a0d08f66437252"
-          }
-        },
-        {
           "client_id": "581359857378-ms960jbbh2ousp8np102cn1pr3v4nsce.apps.googleusercontent.com",
           "client_type": 3
         },
@@ -66,6 +58,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "581359857378-r6pn8nrald05r7qg5jg37mcpg1km0sj6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.statsnail.roberts.statsnail.tides",
+            "certificate_hash": "8039e297bb159c49fd956c49b9a0d08f66437252"
+          }
+        },
         {
           "client_id": "581359857378-m7u051nc02u0tl20a9jul5dak3rahv2d.apps.googleusercontent.com",
           "client_type": 1,
@@ -118,6 +118,22 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "581359857378-48d29pmjh8sb7n4id18hpv9lk83edsga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.statsnail.roberts.statsnail.full",
+            "certificate_hash": "79bd0a5e9b763e97bb5c52482fae9e5a3c9378fa"
+          }
+        },
+        {
+          "client_id": "581359857378-jkeo9o3616bgo9qu37er0d70tl778nfc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.statsnail.roberts.statsnail.full",
+            "certificate_hash": "8039e297bb159c49fd956c49b9a0d08f66437252"
+          }
+        },
         {
           "client_id": "581359857378-5md2osa6t190287h6pn4rpu1lq38atdr.apps.googleusercontent.com",
           "client_type": 1,

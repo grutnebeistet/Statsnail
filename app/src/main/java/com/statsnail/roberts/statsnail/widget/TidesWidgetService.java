@@ -3,9 +3,7 @@ package com.statsnail.roberts.statsnail.widget;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.opengl.Visibility;
 import android.os.Binder;
-import android.os.IBinder;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.RemoteViews;
@@ -14,8 +12,6 @@ import android.widget.RemoteViewsService;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.data.TidesContract;
 import com.statsnail.roberts.statsnail.utils.Utils;
-
-import timber.log.Timber;
 
 /**
  * Created by Adrian on 30/10/2017.

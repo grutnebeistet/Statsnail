@@ -38,7 +38,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Harvest No." />
+                    android:text="@string/harvest_number" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -49,8 +49,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingLeft="@dimen/activity_margin"
-                    android:text="Date" />
+                    android:paddingStart="@dimen/activity_margin"
+                    android:paddingEnd="@dimen/activity_margin"
+                    android:text="@string/date" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -62,7 +63,7 @@
                     android:id="@+id/tv_label_graded_by"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Graded by" />
+                    android:text="@string/graded_by" />
             </RelativeLayout>
         </LinearLayout>
 
@@ -84,7 +85,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_margin="@dimen/fab_margin"
                 android:contentDescription="@string/content_desc_weighing_fab"
                 android:nextFocusDown="@id/super_jumbo_et"

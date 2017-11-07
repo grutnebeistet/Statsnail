@@ -1,6 +1,5 @@
 package com.statsnail.roberts.statsnail.data;
 
-import android.content.ContentResolver;
 import android.net.Uri;
 import android.provider.BaseColumns;
 

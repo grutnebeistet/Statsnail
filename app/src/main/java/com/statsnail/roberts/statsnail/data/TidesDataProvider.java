@@ -11,8 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import timber.log.Timber;
-
 
 public class TidesDataProvider extends ContentProvider {
     private static final String LOG_TAG = TidesDataProvider.class.getSimpleName();

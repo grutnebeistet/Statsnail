@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.firebase.jobdispatcher.JobParameters;
-import com.statsnail.roberts.statsnail.utils.NetworkUtils;
 
 /**
  * Created by Adrian on 28/10/2017.

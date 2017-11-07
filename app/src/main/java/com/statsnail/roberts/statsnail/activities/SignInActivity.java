@@ -1,6 +1,5 @@
 package com.statsnail.roberts.statsnail.activities;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,7 +7,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,14 +24,13 @@ import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
-import butterknife.BindView;
-
 public class SignInActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
         View.OnClickListener {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
+    private static final String SIGN_IN = "GoogleSignInAccount";
 
     private GoogleApiClient mGoogleApiClient;
     private TextView mStatusTextView;
@@ -49,8 +46,6 @@ public class SignInActivity extends AppCompatActivity implements
 
         // Button listeners
         findViewById(R.id.sign_in_button).setOnClickListener(this);
-        findViewById(R.id.sign_out_button).setOnClickListener(this);
-        findViewById(R.id.disconnect_button).setOnClickListener(this);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -95,7 +90,6 @@ public class SignInActivity extends AppCompatActivity implements
     }
 
 
-
     private void showSnackbar(final String text) {
         View container = findViewById(R.id.main_layout);
         if (container != null) {
@@ -135,8 +129,8 @@ public class SignInActivity extends AppCompatActivity implements
                     ((BuildConfig.APPLICATION_ID).equals("com.statsnail.roberts.statsnail.full") ?
                             MainActivityFull.class : MainActivity.class);
             Intent in = new Intent(this, c);
-            in.putExtra("GoogleSignInAccount", acct);
-            Log.i(TAG, "startChooser med ID " + acct.getId() + " id token " + acct.getIdToken() + " name " + acct.getAccount().name);
+            in.putExtra(SIGN_IN, acct);
+
             startActivity(in);
             finish();
             //mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
@@ -189,8 +183,7 @@ public class SignInActivity extends AppCompatActivity implements
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // An unresolvable error has occurred and Google APIs (including Sign-In) will not
         // be available.
-        Log.d(TAG, "onConnectionFailed:" + connectionResult);
-        Toast.makeText(this, "Connection failed", Toast.LENGTH_SHORT).show();
+        showSnackbar(getString(R.string.connection_error));
     }
 
     @Override
@@ -221,13 +214,11 @@ public class SignInActivity extends AppCompatActivity implements
     private void updateUI(boolean signedIn) {
         if (signedIn) {
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
-            findViewById(R.id.sign_out_and_disconnect).setVisibility(View.VISIBLE);
 
         } else {
             mStatusTextView.setText(R.string.signed_out);
 
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
-            findViewById(R.id.sign_out_and_disconnect).setVisibility(View.GONE);
         }
     }
 
@@ -236,12 +227,6 @@ public class SignInActivity extends AppCompatActivity implements
         switch (v.getId()) {
             case R.id.sign_in_button:
                 signIn();
-                break;
-            case R.id.sign_out_button:
-                signOut();
-                break;
-            case R.id.disconnect_button:
-                revokeAccess();
                 break;
         }
     }

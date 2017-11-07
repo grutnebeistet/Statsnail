@@ -122,14 +122,4 @@
         android:nextFocusUp="@+id/tab_layout"
         android:src="@drawable/current_location" />
 
-    <Button
-        android:id="@+id/button_notify"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/cardview_container"
-        android:layout_alignStart="@+id/cardview_container"
-        android:layout_marginStart="12dp"
-        android:contentDescription="test button todo:delete"
-        android:text="notify Tezt"
-        android:visibility="invisible" />
 </RelativeLayout>

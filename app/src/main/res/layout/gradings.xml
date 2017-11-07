@@ -33,14 +33,14 @@
             <TextView
                 style="@style/EditorStaticText"
                 android:contentDescription="@string/content_desc_super_label"
-                android:text="Super Jumbo" />
+                android:text="@string/super_jumbo" />
 
             <RelativeLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:paddingLeft="16dp"
-                android:paddingRight="30dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="30dp">
 
                 <EditText
                     android:id="@+id/super_jumbo_et"
@@ -52,9 +52,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
                     android:contentDescription="@string/content_desc_kg_label"
-                    android:paddingRight="8dp"
+                    android:paddingEnd="8dp"
                     android:paddingTop="16dp"
                     android:text="@string/kg_as_measure"
                     android:textColor="@color/dim_text" />
@@ -69,14 +69,14 @@
             <TextView
                 style="@style/EditorStaticText"
                 android:contentDescription="@string/content_desc_jumbo_label"
-                android:text="Jumbo" />
+                android:text="@string/jumbo" />
 
             <RelativeLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:paddingLeft="16dp"
-                android:paddingRight="30dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="30dp">
 
                 <EditText
                     android:id="@+id/jumbo_et"
@@ -88,9 +88,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
                     android:contentDescription="@string/content_desc_kg_label"
-                    android:paddingRight="8dp"
+                    android:paddingEnd="8dp"
                     android:paddingTop="16dp"
                     android:text="@string/kg_as_measure"
                     android:textColor="#91917f" />
@@ -105,14 +105,14 @@
             <TextView
                 style="@style/EditorStaticText"
                 android:contentDescription="@string/content_desc_large_label"
-                android:text="Large" />
+                android:text="@string/large" />
 
             <RelativeLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
-                android:paddingLeft="16dp"
-                android:paddingRight="30dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="30dp">
 
                 <EditText
                     android:id="@+id/large_et"
@@ -127,9 +127,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
                     android:contentDescription="@string/content_desc_kg_label"
-                    android:paddingRight="8dp"
+                    android:paddingEnd="8dp"
                     android:paddingTop="16dp"
                     android:text="@string/kg_as_measure"
                     android:textColor="#91917f" />
@@ -149,8 +149,8 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="2"
-                android:paddingLeft="16dp"
-                android:paddingRight="30dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="30dp">
 
                 <Spinner
                     android:id="@+id/spinner_harvest_no"

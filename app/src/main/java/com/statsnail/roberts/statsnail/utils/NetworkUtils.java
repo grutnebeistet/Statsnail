@@ -9,7 +9,6 @@ import android.preference.PreferenceManager;
 
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
-import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.models.Station;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -17,7 +16,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;

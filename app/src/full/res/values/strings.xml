@@ -22,11 +22,24 @@
     <string name="toast_harvest_added" formatted="true">Harvest number %d registered</string>
     <string name="kg_as_measure">Kg</string>
     <string name="measure_in_kg" formatted="true">%s Kg</string>
-    <string name="measure_in_kg_int" formatted="true">%x Kg</string>
+    <string name="measure_in_kg_int" formatted="true">%d Kg</string>
     <string name="error_reading_sheet">Failed to read the online spreadsheet</string>
     <string name="harvest_number">Harvest No.</string>
     <string name="grading_button">GRADING</string>
     <string name="weighing_button">WEIGHING</string>
+    <string name="tab_harvest">Harvest</string>
+    <string name="tab_tides">Tides</string>
+    <string name="discard">Discard?</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+    <string name="periwinkle_grading">Periwinkle Grading</string>
+    <string name="periwinkle_weighing">Periwinkle Weighing</string>
+    <string name="weight_catch">Catch: </string>
+    <string name="super_jumbo">Super Jumbo</string>
+    <string name="jumbo">Jumbo</string>
+    <string name="large">Large</string>
+    <string name="date">Date</string>
+    <string name="graded_by">Graded by</string>
 
     <!--Dialog-->
     <string name="grade_confirmation">Super Jumbo: %s\nJumbo: %s\nLarge: %s</string>

@@ -17,8 +17,6 @@
 package com.statsnail.roberts.statsnail.activities;
 
 import android.Manifest;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -43,7 +41,6 @@ import android.view.View;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.statsnail.roberts.statsnail.BuildConfig;
@@ -65,8 +62,10 @@ import timber.log.Timber;
 public class MainActivityFull extends AppCompatActivity {
     public static final String EXTRA_LATITUDE = "latitude";
     public static final String EXTRA_LONGITUDE = "longitude";
+    // Home location is actual GPS location, primarily used for notifaction
     public static final String HOME_LAT = "home_lat";
     public static final String HOME_LON = "home_lon";
+    private static final String LOCATION = "location";
     public static MainActivityFull instance;
     private TidesFragment mTidesFragment;
     private HarvestChooserFragment mHarvestFragment;
@@ -92,20 +91,27 @@ public class MainActivityFull extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         instance = this;
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
         setContentView(R.layout.activity_main_full);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
-      //  setSupportActionBar(mToolbar);
+        if (savedInstanceState == null) {
+            if (!checkPermissions()) {
+                requestPermissions();
+            } else {
+                getLastLocation();
+            }
+        } else {
+            mLastLocation = savedInstanceState.getParcelable(LOCATION);
+            bindWidgetsWithAnEvent();
+            setupTabLayout();
+        }
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if (!Utils.isGPSEnabled(this)) {
-            showSnackbar("Without GPS enabled bla bla");
-        }
-        //SyncUtils.initialize(this);
     }
 
     public static MainActivityFull getInstance() {
@@ -116,20 +122,40 @@ public class MainActivityFull extends AppCompatActivity {
     public void onStart() {
         super.onStart();
 
-        if (!checkPermissions()) {
-            requestPermissions();
-        } else {
-            getLastLocation();
-        }
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(LOCATION, mLastLocation);
+        super.onSaveInstanceState(outState);
     }
 
     private void setupTabLayout() {
-        mTidesFragment = TidesFragment.newInstance(mLastLocation);
-        mHarvestFragment = HarvestChooserFragment.NewInstance(mLastLocation);
-        if (mTabs.getTabCount() == 0) {
-            mTabs.addTab(mTabs.newTab().setText("Tides"), true);
-            mTabs.addTab(mTabs.newTab().setText("Harvest"));
+        android.support.v4.app.Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frag_container);
+        if (fragment == null) {
+            Timber.d("setupTab frag NULL");
+            mHarvestFragment = HarvestChooserFragment.NewInstance(mLastLocation);
+            mTidesFragment = TidesFragment.newInstance(mLastLocation);
+        } else if (fragment instanceof TidesFragment) {
+            Timber.d("setupTab frag Tides");
+            mTidesFragment = (TidesFragment) fragment;
+            mHarvestFragment = HarvestChooserFragment.NewInstance(mLastLocation);
+        } else if (fragment instanceof HarvestChooserFragment) {
+            Timber.d("setupTab frag Harvest");
+            mHarvestFragment = (HarvestChooserFragment) fragment;
+            mTidesFragment = TidesFragment.newInstance(mLastLocation);
         }
+
+        if (mTabs.getTabCount() == 0) {
+            mTabs.addTab(mTabs.newTab().setText(getString(R.string.tab_tides)), true);
+            mTabs.addTab(mTabs.newTab().setText(getString(R.string.tab_harvest)));
+
+
+        }
+
+
+
     }
 
     private void bindWidgetsWithAnEvent() {
@@ -289,7 +315,6 @@ public class MainActivityFull extends AppCompatActivity {
             if (grantResults.length <= 0) {
                 // If user interaction was interrupted, the permission request is cancelled and you
                 // receive empty arrays.
-                Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted.
                 getLastLocation();

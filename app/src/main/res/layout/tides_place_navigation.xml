@@ -59,7 +59,7 @@
         android:nextFocusForward="@+id/prev_day_button"
         android:nextFocusLeft="@drawable/prev_day"
         android:nextFocusUp="@drawable/current_location"
-        android:paddingLeft="4dp"
+        android:paddingStart="@dimen/padding_half"
         >
 
         <ImageView

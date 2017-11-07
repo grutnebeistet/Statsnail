@@ -26,7 +26,6 @@
 
         <activity
             android:name=".activities.SignInActivity"
-            android:configChanges="orientation"
             android:label="Statsnail"
             android:theme="@style/AppTheme.NoActionBar"
             android:screenOrientation="portrait">

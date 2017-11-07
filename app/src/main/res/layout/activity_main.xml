@@ -30,16 +30,6 @@
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
-    <ImageButton
-        android:id="@+id/image_button_curr_loc"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:contentDescription="@string/content_desc_location_icon"
-        android:layout_margin="22dp"
-        android:layout_below="@+id/toolbar"
-        android:src="@drawable/current_location" />
 
     <!--
         <android.support.v7.widget.CardView

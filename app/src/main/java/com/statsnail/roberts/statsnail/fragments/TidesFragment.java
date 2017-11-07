@@ -1,36 +1,23 @@
 package com.statsnail.roberts.statsnail.fragments;
 
-import android.app.AlarmManager;
-import android.app.Fragment;
-import android.app.LoaderManager;
-import android.app.PendingIntent;
-import android.content.CursorLoader;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.Preference;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -42,20 +29,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
 import com.statsnail.roberts.statsnail.adapters.TidesDataAdapter;
 import com.statsnail.roberts.statsnail.data.TidesContract;
 import com.statsnail.roberts.statsnail.models.TidesData;
-import com.statsnail.roberts.statsnail.models.Station;
-import com.statsnail.roberts.statsnail.sync.NotifyService;
 import com.statsnail.roberts.statsnail.sync.StatsnailSyncTask;
-import com.statsnail.roberts.statsnail.utils.NetworkUtils;
 import com.statsnail.roberts.statsnail.utils.Utils;
-
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -66,8 +46,6 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
-
-import static android.content.Context.ALARM_SERVICE;
 
 /**
  * Created by Adrian on 24/10/2017.
@@ -116,6 +94,10 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     String TAG = TidesFragment.class.getSimpleName();
     private static final String SELECTED_STYLE = "selected_style";
+    private static final String MAP_ZOOM = "map_zoom";
+    private static final String PLACE_NAME = "location_name";
+    private static final String LOCATION = "location";
+    private static final String CONTAINER_VISIBILITY = "visibility";
 
     private static final int FORECAST_DAYS = 7;
     private GoogleMap mMap = null;
@@ -134,17 +116,15 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     };
     private static LatLng LAT_LNG;
     private Location mLocation;
-    DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-    DatabaseReference mTides = mRootRef.child("tides");
     private TidesDataAdapter mAdapter;
     private TidesData mTidesData;
-
+    private float mMapZoom = 8;
     SharedPreferences mPreferences;
-    Cursor mCursor;
+    private int mVisibility = View.VISIBLE;
 
     public static TidesFragment newInstance(Location location) {
         Bundle args = new Bundle();
-        args.putParcelable("location", location);
+        args.putParcelable(LOCATION, location);
         TidesFragment f = new TidesFragment();
         f.setArguments(args);
 
@@ -154,23 +134,37 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            mSelectedStyleId = savedInstanceState.getInt(SELECTED_STYLE);
-        }
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        initLocation();
+        if (savedInstanceState != null) {
+            Timber.d("savedInstance != NUll");
+            mSelectedStyleId = savedInstanceState.getInt(SELECTED_STYLE);
+            mMapZoom = savedInstanceState.getFloat(MAP_ZOOM);
+            double longitude = savedInstanceState.getDouble(MainActivityFull.EXTRA_LONGITUDE);
+            double latitude = savedInstanceState.getDouble(MainActivityFull.EXTRA_LATITUDE);
+            Timber.d("longitude saved : " + longitude);
+            LAT_LNG = new LatLng(latitude, longitude);
+            SharedPreferences.Editor editor = mPreferences.edit();
+            editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(latitude));
+            editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(longitude));
+            Timber.d("longitude to preference : " + String.valueOf(longitude));
+            editor.commit();
+        }
+        if (savedInstanceState == null) {
+            initLocation();
+        }
+
         mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis())).apply();
         mAdapter = new TidesDataAdapter(getActivity());
 
-        //getLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
+
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
-        //getActivity().getWindow().findViewById(R.id.cardview).setVisibility(View.INVISIBLE);
 
     }
 
     private void initLocation() {
-        mLocation = getArguments().getParcelable("location");
-        LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        mLocation = getArguments().getParcelable(LOCATION);
+        if (mLocation != null)
+            LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(mLocation.getLongitude()));
         editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(mLocation.getLatitude()));
@@ -192,6 +186,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
             public void onClick(View view) {
                 initLocation();
                 onMapReady(mMap);
+                mMapZoom = 8;
+                mContainer.setVisibility(View.VISIBLE);
             }
         });
 
@@ -262,6 +258,12 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tides, container, false);
         ButterKnife.bind(this, view);
+        if (savedInstanceState != null) {
+            //      mLocationTextView.setText(savedInstanceState.getString(PLACE_NAME));
+            mVisibility = savedInstanceState.getInt(CONTAINER_VISIBILITY);
+            mContainer.setVisibility(mVisibility);
+        }
+
         mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mTidesRecyclerView.setAdapter(mAdapter);
         return view;
@@ -284,7 +286,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     @Override
     public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor cursor) {
-        mContainer.setVisibility(View.VISIBLE);
+        mContainer.setVisibility(mVisibility);
         Timber.d("Cursor count: " + cursor.getCount() + " position: " + cursor.getPosition());
         String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                 Utils.getDate(System.currentTimeMillis()));
@@ -327,6 +329,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     }
 
     private void updateValuesOnLocationChange() {
+        Timber.d("updateValuesOnLocationChange");
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -340,13 +343,15 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     @Override
     public void onMapReady(GoogleMap map) {
+        Timber.d("onMapReady....");
         mMap = map;
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LAT_LNG, 8));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LAT_LNG, mMapZoom));
 
         setSelectedStyle();
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
+                LAT_LNG = latLng;
                 SharedPreferences.Editor editor = mPreferences.edit();
                 editor.putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis()));
                 editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(latLng.latitude));
@@ -354,7 +359,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                 editor.commit();
 
                 updateValuesOnLocationChange();
-                mContainer.setVisibility(View.VISIBLE);
+                mVisibility = View.VISIBLE;
             }
         });
 
@@ -376,6 +381,12 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     public void onSaveInstanceState(Bundle outState) {
         // Store the selected map style, so we can assign it when the activity resumes.
         outState.putInt(SELECTED_STYLE, mSelectedStyleId);
+        outState.putFloat(MAP_ZOOM, mMap.getCameraPosition().zoom);
+        // outState.putParcelable(LOCATION, mLocation);
+        outState.putDouble(MainActivityFull.EXTRA_LATITUDE, LAT_LNG.latitude);
+        outState.putDouble(MainActivityFull.EXTRA_LONGITUDE, LAT_LNG.longitude);
+        //outState.putString(PLACE_NAME, mLocationTextView.getText().toString());
+        outState.putInt(CONTAINER_VISIBILITY, mContainer.getVisibility());
         super.onSaveInstanceState(outState);
     }
 

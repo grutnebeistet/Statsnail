@@ -6,21 +6,13 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.google.firebase.database.DataSnapshot;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.fragments.TidesFragment;
-import com.statsnail.roberts.statsnail.models.TidesData;
-import com.statsnail.roberts.statsnail.utils.Utils;
-
-import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import timber.log.Timber;
 
 /**
  * Created by Adrian on 24/10/2017.
@@ -28,14 +20,10 @@ import timber.log.Timber;
 
 public class TidesDataAdapter extends RecyclerView.Adapter<TidesDataAdapter.TdViewHolder> {
     Context mContext;
-    ArrayList<TidesData.Waterlevel> mData;
-    DataSnapshot mSnapShot;
     Cursor mCursor;
 
     public TidesDataAdapter(Context context) {
         mContext = context;
-        //mData = data;
-        //mSnapShot = snapshot;
     }
 
     @Override

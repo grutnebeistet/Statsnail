@@ -1,7 +1,6 @@
 package com.statsnail.roberts.statsnail.widget;
 
 import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
@@ -13,12 +12,9 @@ import com.statsnail.roberts.statsnail.BuildConfig;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivity;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
-import com.statsnail.roberts.statsnail.activities.SignInActivity;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.io.IOException;
-
-import timber.log.Timber;
 
 /**
  * Created by Adrian on 30/10/2017.
@@ -43,12 +39,6 @@ public class TidesWidgetProvider extends AppWidgetProvider {
 
             PendingIntent configPendingIntent = PendingIntent.getActivity(context, 0, detailsIntent, 0);
             views.setOnClickPendingIntent(R.id.widget_container,configPendingIntent);
-
-
-      /*      PendingIntent clickPendingIntentTemplate = TaskStackBuilder.create(context)
-                    .addNextIntentWithParentStack(detailsIntent)
-                    .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-            views.setPendingIntentTemplate(R.id.widget_container, clickPendingIntentTemplate);*/
 
             Intent intent = new Intent(context, TidesWidgetService.class);
 

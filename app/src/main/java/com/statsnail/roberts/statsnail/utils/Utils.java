@@ -2,11 +2,9 @@ package com.statsnail.roberts.statsnail.utils;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.icu.text.TimeZoneNames;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -14,34 +12,18 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.util.Log;
 
-import com.firebase.jobdispatcher.Constraint;
-import com.firebase.jobdispatcher.Driver;
-import com.firebase.jobdispatcher.FirebaseJobDispatcher;
-import com.firebase.jobdispatcher.GooglePlayDriver;
-import com.firebase.jobdispatcher.Job;
-import com.firebase.jobdispatcher.Lifetime;
-import com.firebase.jobdispatcher.Trigger;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
-import com.statsnail.roberts.statsnail.data.TidesContract;
 import com.statsnail.roberts.statsnail.models.TidesData;
-import com.statsnail.roberts.statsnail.sync.FirebaseJobService;
 import com.statsnail.roberts.statsnail.sync.NotifyService;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import timber.log.Timber;
@@ -62,7 +44,6 @@ public final class Utils {
         Date date = dateFormat.parse(dateString);
         return date.getTime();
     }
-
 
 
     // returns a date string of the day after param
@@ -112,6 +93,7 @@ public final class Utils {
         Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " = " + notifyOnNext);
         return lowTideHours >= currentHours;
     }
+
     // returns true if tomorrow is last day of forecast
     public static boolean isTomorrowLast(String dateString) throws ParseException {
         long now = System.currentTimeMillis();
@@ -120,6 +102,7 @@ public final class Utils {
 
         return (testDate + TimeUnit.DAYS.toMillis(1) >= last);
     }
+
     // Returns a String of remaining time in hours and/or minutes given a time in millisec
     public static String getRemainingTime(long rawTime) {
         long millisLeft = rawTime - System.currentTimeMillis();
@@ -160,27 +143,27 @@ public final class Utils {
         String subAdminArea = addresses.get(0).getSubAdminArea();
 
         String slash = "/";
-        StringBuilder builder = new StringBuilder();
+        String builder = country + slash + state + slash + subAdminArea +
+                slash + ka + kairp + slash + slash + loc + slash + fea + slash + address;
 
-        return builder.append(country).append(slash).append(state).append(slash).append(subAdminArea)
-                .append(slash).append(ka).append(kairp).append(slash).append(slash).append(loc).append(slash).append(fea).append(slash).append(address).toString();
+        return builder;
     }
 
     public static String getPlaceName(Context context) throws IOException {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
         String latitude = preference.getString(
                 MainActivityFull.EXTRA_LATITUDE, context.getResources().getString(R.string.default_latitude));
-        Timber.d("LAT i getPlaceName: " + latitude);
+
         String longitude = preference.getString(
                 MainActivityFull.EXTRA_LONGITUDE, context.getResources().getString(R.string.default_longitude));
-
+        Timber.d("LON i getPlaceName: " + longitude);
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addresses = geocoder.getFromLocation(Double.valueOf(latitude), Double.valueOf(longitude), 1);
 
         if (addresses.size() != 0) {
             String subAdmin = addresses.get(0).getSubAdminArea();
             String adminArea = addresses.get(0).getAdminArea();
-            return subAdmin == null || subAdmin == "null" ?
+            return subAdmin == null || subAdmin.equals("null") ?
                     adminArea : subAdmin + ", " + adminArea;
         }
         return "Location unavailable";

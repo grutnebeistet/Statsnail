@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.net.Uri;
-import android.util.Log;
 
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.statsnail.roberts.statsnail.R;
@@ -22,9 +21,7 @@ import com.google.api.services.sheets.v4.model.ValueRange;
 import java.util.List;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
-import timber.log.Timber;
 
-import static android.content.ContentValues.TAG;
 import static com.statsnail.roberts.statsnail.activities.HarvestActivity.REQUEST_AUTHORIZATION;
 import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_DATE;
 import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_GRADED_BY;

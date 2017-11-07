@@ -6,11 +6,7 @@ import android.content.Context;
 
 import com.statsnail.roberts.statsnail.data.TidesContract;
 import com.statsnail.roberts.statsnail.data.TidesDbHelper;
-import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.utils.NetworkUtils;
-import com.statsnail.roberts.statsnail.utils.Utils;
-
-import java.net.URL;
 
 import timber.log.Timber;
 
