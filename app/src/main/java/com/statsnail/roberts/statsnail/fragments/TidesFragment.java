@@ -187,7 +187,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                 initLocation();
                 onMapReady(mMap);
                 mMapZoom = 8;
-                mContainer.setVisibility(View.VISIBLE);
+                mVisibility = View.VISIBLE;
             }
         });
 

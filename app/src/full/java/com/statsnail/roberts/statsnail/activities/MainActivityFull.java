@@ -62,10 +62,11 @@ import timber.log.Timber;
 public class MainActivityFull extends AppCompatActivity {
     public static final String EXTRA_LATITUDE = "latitude";
     public static final String EXTRA_LONGITUDE = "longitude";
-    // Home location is actual GPS location, primarily used for notifaction
+    // Home location is actual GPS location, primarily used for notifactions
     public static final String HOME_LAT = "home_lat";
     public static final String HOME_LON = "home_lon";
     private static final String LOCATION = "location";
+    private static final String TAB_POS = "tab_post";
     public static MainActivityFull instance;
     private TidesFragment mTidesFragment;
     private HarvestChooserFragment mHarvestFragment;
@@ -84,8 +85,6 @@ public class MainActivityFull extends AppCompatActivity {
 
     @BindView(R.id.pager)
     ViewPager mViewPager;
-    SharedPreferences mPreferences;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,19 +118,15 @@ public class MainActivityFull extends AppCompatActivity {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putParcelable(LOCATION, mLastLocation);
+        outState.putInt(TAB_POS, mTabs.getSelectedTabPosition());
         super.onSaveInstanceState(outState);
     }
 
     private void setupTabLayout() {
+        boolean selHarv = false;
+        boolean selTides = true;
         android.support.v4.app.Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frag_container);
         if (fragment == null) {
             Timber.d("setupTab frag NULL");
@@ -143,18 +138,17 @@ public class MainActivityFull extends AppCompatActivity {
             mHarvestFragment = HarvestChooserFragment.NewInstance(mLastLocation);
         } else if (fragment instanceof HarvestChooserFragment) {
             Timber.d("setupTab frag Harvest");
+            selHarv = true;
+            selTides = false;
             mHarvestFragment = (HarvestChooserFragment) fragment;
             mTidesFragment = TidesFragment.newInstance(mLastLocation);
         }
 
         if (mTabs.getTabCount() == 0) {
-            mTabs.addTab(mTabs.newTab().setText(getString(R.string.tab_tides)), true);
-            mTabs.addTab(mTabs.newTab().setText(getString(R.string.tab_harvest)));
-
+            mTabs.addTab(mTabs.newTab().setText(getString(R.string.tab_tides)), selTides);
+            mTabs.addTab(mTabs.newTab().setText(getString(R.string.tab_harvest)), selHarv);
 
         }
-
-
 
     }
 

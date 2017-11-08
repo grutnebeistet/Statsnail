@@ -196,7 +196,7 @@ public class HarvestActivity extends AppCompatActivity
         JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
         mService = new com.google.api.services.sheets.v4.Sheets.Builder(
                 transport, jsonFactory, mCredential)
-                .setApplicationName("Statsnail Catch Logger")
+                .setApplicationName(getString(R.string.name_logger))
                 .build();
 
 
@@ -436,9 +436,8 @@ public class HarvestActivity extends AppCompatActivity
 
         int loss = registeredCatch - (Integer.valueOf(large) + Integer.valueOf(jumbo) + Integer.valueOf(superJumbo));
 
-        Timber.d("loss: " + loss + " regC: " + registeredCatch);
         String currentHarvestNo = String.valueOf(selectedHarvestNo + 1); // +1 cos row 1 == labels
-        range = "sheet4!G" + currentHarvestNo + ":L" + currentHarvestNo; //TODO R.string
+        range = getString(R.string.spreadsheet_read_range) + "!G" + currentHarvestNo + ":L" + currentHarvestNo; //TODO R.string
 
         List<List<Object>> values = new ArrayList<>();
 
@@ -489,7 +488,7 @@ public class HarvestActivity extends AppCompatActivity
     public void postWeighingData() {
         String range;
         String spreadsheetId = getString(R.string.spreadsheet_id);
-        range = "sheet4!A1:F1";
+        range = getString(R.string.spreadsheet_read_range) + "!A1:F1";
 
         int harvestNum;
         if (mExistingRows == null || mExistingRows.getValues() == null) {
@@ -539,7 +538,7 @@ public class HarvestActivity extends AppCompatActivity
                     .execute();
         } catch (NullPointerException | IOException e) {
             Log.i(TAG, e.getMessage());
-            toastMessage = "Failed to register catch!";
+            toastMessage = getString(R.string.error_register_failed);
             toastFromThread(toastMessage);
             finish();
             return;
