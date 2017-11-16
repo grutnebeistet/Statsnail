@@ -17,8 +17,6 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

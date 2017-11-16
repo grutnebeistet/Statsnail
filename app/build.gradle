@@ -104,13 +104,17 @@ dependencies {
     compile 'com.android.support:support-v13:26.1.0'
     compile 'com.android.support:preference-v7:26.1.0'
     compile 'pub.devrel:easypermissions:0.3.0'
-    compile 'com.firebase:firebase-jobdispatcher:0.5.2'
+    compile 'com.firebase:firebase-jobdispatcher:0.8.4'
     compile 'com.google.android.gms:play-services-location:11.4.2'
     compile 'com.google.android.gms:play-services-maps:11.4.2'
     compile 'com.google.android.gms:play-services-auth:11.4.2'
     compile 'com.google.firebase:firebase-messaging:11.4.2'
     compile 'com.google.firebase:firebase-core:11.4.2'
     compile 'com.google.firebase:firebase-auth:11.4.2'
+   // compile "com.google.android.gms:play-services-gcm:11.4.2"
+    // https://mvnrepository.com/artifact/com.google.gms/google-services
+   // compile group: 'com.google.gms', name: 'google-services', version: '3.1.1'
+
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     compile 'com.google.code.gson:gson:2.7'
     // fullCom

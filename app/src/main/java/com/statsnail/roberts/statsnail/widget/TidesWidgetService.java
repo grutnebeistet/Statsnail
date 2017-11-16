@@ -59,7 +59,7 @@ public class TidesWidgetService extends RemoteViewsService {
             String selection = TidesContract.TidesEntry.COLUMN_TIDES_DATE + "=?";
             String[] selectionArgs = new String[]{Utils.getDate(System.currentTimeMillis())};
 
-            tideData = mContext.getContentResolver().query(TidesContract.TidesEntry.CONTENT_URI,
+            tideData = mContext.getContentResolver().query(TidesContract.TidesEntry.CONTENT_URI_TIDES,
                     projection, selection, selectionArgs, sortOrder
             );
             if (tideData == null || !tideData.moveToFirst()) {

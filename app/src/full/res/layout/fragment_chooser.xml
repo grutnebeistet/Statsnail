@@ -1,38 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/harvest_background"
-    tools:context="com.statsnail.roberts.statsnail.fragments.HarvestChooserFragment">
+    android:layout_height="wrap_content">
 
-    <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:id="@+id/logo_bg"
-        android:src="@drawable/ic_logo"
-        android:focusable="false"
-        android:transitionName="logo_transition"
-        android:layout_marginTop="64dp"
-        android:layout_centerHorizontal="true"/>
-
-    <FrameLayout
-        android:id="@+id/harvest_container"
+    <LinearLayout
+        android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout="@layout/fragment_chooser"/>
+        android:paddingTop="@dimen/g_top_margin"
+        android:background="@color/harvest_background"
+        android:orientation="vertical"
+        tools:context="com.statsnail.roberts.statsnail.fragments.HarvestChooserFragment">
 
-    <include layout="@layout/content_chooser" />
+<!--
+        <ImageView
+            android:id="@+id/logo_bg"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/g_top_margin"
+            android:focusable="false"
+            android:src="@drawable/ic_logo"
+            android:transitionName="logo_transition" />
+-->
 
- <!-- <ListView
-      android:id="@+id/left_drawer"
-      android:layout_width="@dimen/menu_list_width"
-      android:layout_height="match_parent"
-      android:layout_gravity="start"
-      android:choiceMode="singleChoice"
-      android:divider="@android:color/transparent"
-      android:dividerHeight="0dp"
-      android:background="@color/blue_grey_900"/>-->
-</RelativeLayout>
+
+        <include
+            android:id="@+id/chooser"
+            layout="@layout/content_chooser" />
+
+        <include
+            layout="@layout/log"/>
+
+    </LinearLayout>
+</ScrollView>

@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Context;
 
 import com.statsnail.roberts.statsnail.data.TidesContract;
-import com.statsnail.roberts.statsnail.data.TidesDbHelper;
 import com.statsnail.roberts.statsnail.utils.NetworkUtils;
 
 import timber.log.Timber;
@@ -15,34 +14,34 @@ import timber.log.Timber;
  */
 
 public class StatsnailSyncTask {
-    synchronized public static void syncData(Context context) {
+    synchronized public static void syncData(Context context, boolean homeLocation) {
 
         try {
             Timber.d("SyncData");
-            //   NetworkUtils.loadNearbyXml(Utils.buildTidesRequestUrl(mLocation));
-            String tidesRequestUrl = NetworkUtils.buildTidesRequestUrl(context);
+
+            String windsRequestUrl = NetworkUtils.buildWindsRequestUrl(context, homeLocation);
+            ContentValues[] windsData = NetworkUtils.loadWindsXml(windsRequestUrl);
+
+            String tidesRequestUrl = NetworkUtils.buildTidesRequestUrl(context, homeLocation);
             ContentValues[] tidesData = NetworkUtils.loadNearbyXml(context, tidesRequestUrl);
 
-            String windsRequestUrl = NetworkUtils.buildWindsRequestUrl(context);
-           // ContentValues[] windsData = NetworkUtils.loadWindsXml(windsRequestUrl);
-            Timber.d("winds url : " + windsRequestUrl);
-            for (ContentValues tides : tidesData) {
-                // tides.put("TODO");
-            }
-
-            if (tidesData != null && tidesData.length != 0) {
-                TidesDbHelper dbHelper = new TidesDbHelper(context);
-                //      dbHelper.getReadableDatabase().delete(TidesContract.TidesEntry.TABLE_NAME,null,null);
-                Timber.d("TidesData in SYnc: " + tidesData[0].get(TidesContract.TidesEntry.COLUMN_TIDE_ERROR_MSG) + " (errormsg)");
-                ContentResolver resolver = context.getContentResolver();
+            ContentResolver resolver = context.getContentResolver();
+            if (null != tidesData && tidesData.length != 0) {
                 resolver.delete(
-                        TidesContract.TidesEntry.CONTENT_URI,
+                        TidesContract.TidesEntry.CONTENT_URI_TIDES,
                         null, null);
 
-                resolver.bulkInsert(TidesContract.TidesEntry.CONTENT_URI, tidesData);
+                resolver.bulkInsert(TidesContract.TidesEntry.CONTENT_URI_TIDES, tidesData);
+            }
+            if (null != windsData && windsData.length != 0) {
+                resolver.delete(
+                        TidesContract.TidesEntry.CONTENT_URI_WINDS, null, null
+                );
+                resolver.bulkInsert(TidesContract.TidesEntry.CONTENT_URI_WINDS, windsData);
             }
 
         } catch (Exception e) {
+            Timber.d("failed to sync data");
             e.printStackTrace();
         }
 

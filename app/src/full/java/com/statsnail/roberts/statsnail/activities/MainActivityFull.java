@@ -95,7 +95,13 @@ public class MainActivityFull extends AppCompatActivity {
         setContentView(R.layout.activity_main_full);
         ButterKnife.bind(this);
         Timber.plant(new Timber.DebugTree());
-        if (savedInstanceState == null) {
+        if (!checkPermissions()) {
+            requestPermissions();
+        } else getLastLocation();
+
+
+
+/*        if (savedInstanceState == null) {
             if (!checkPermissions()) {
                 requestPermissions();
             } else {
@@ -105,7 +111,7 @@ public class MainActivityFull extends AppCompatActivity {
             mLastLocation = savedInstanceState.getParcelable(LOCATION);
             bindWidgetsWithAnEvent();
             setupTabLayout();
-        }
+        }*/
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -198,8 +204,8 @@ public class MainActivityFull extends AppCompatActivity {
                             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainActivityFull.this);
                             SharedPreferences.Editor editor = preferences.edit();
                             // TODO  convert to doubleToRawLongBits
-                            editor.putString(EXTRA_LATITUDE, String.valueOf(mLastLocation.getLatitude()));
-                            editor.putString(EXTRA_LONGITUDE, String.valueOf(mLastLocation.getLongitude()));
+                /*            editor.putString(EXTRA_LATITUDE, String.valueOf(mLastLocation.getLatitude()));
+                            editor.putString(EXTRA_LONGITUDE, String.valueOf(mLastLocation.getLongitude()));*/
                             editor.putString(HOME_LAT, String.valueOf(mLastLocation.getLatitude()));
                             editor.putString(HOME_LON, String.valueOf(mLastLocation.getLongitude()));
                             editor.commit();
@@ -210,13 +216,14 @@ public class MainActivityFull extends AppCompatActivity {
                             } catch (IOException e) {
 
                             }
-                            // Location retrieved means it's okay to initiate fragments
-                            bindWidgetsWithAnEvent();
-                            setupTabLayout();
+
 
                         } else {
                             showSnackbar(getString(R.string.no_location_detected));
                         }
+                        // Location retrieved means it's okay to initiate fragments
+                        bindWidgetsWithAnEvent();
+                        setupTabLayout();
                     }
                 });
     }
@@ -224,6 +231,7 @@ public class MainActivityFull extends AppCompatActivity {
 
     private void showSnackbar(final int mainTextStringId, final int actionStringId,
                               View.OnClickListener listener) {
+
         Snackbar.make(findViewById(android.R.id.content),
                 getString(mainTextStringId),
                 Snackbar.LENGTH_INDEFINITE)

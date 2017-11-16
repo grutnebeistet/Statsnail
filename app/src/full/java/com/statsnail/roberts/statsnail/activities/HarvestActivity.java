@@ -6,19 +6,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -27,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -49,7 +46,6 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
 import com.statsnail.roberts.statsnail.R;
-import com.statsnail.roberts.statsnail.adapters.HarvestLogAdapter;
 import com.statsnail.roberts.statsnail.utils.HarvestUtils;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
@@ -65,21 +61,14 @@ import butterknife.ButterKnife;
 import pub.devrel.easypermissions.EasyPermissions;
 import timber.log.Timber;
 
-import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_DATE;
-import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_GRADED_BY;
-import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_ID;
-import static com.statsnail.roberts.statsnail.data.LogContract.COLUMN_HARVEST_USER;
-import static com.statsnail.roberts.statsnail.data.LogContract.CONTENT_URI_HARVEST_LOG;
-
 public class HarvestActivity extends AppCompatActivity
         implements EasyPermissions.PermissionCallbacks,
-        View.OnTouchListener,
-        LoaderManager.LoaderCallbacks<Cursor>, GoogleApiClient.OnConnectionFailedListener {
+        View.OnTouchListener, GoogleApiClient.OnConnectionFailedListener {
     private static final String TAG = HarvestActivity.class.getSimpleName();
 
     GoogleAccountCredential mCredential;
     private GoogleSignInAccount mGoogleAccount;
-    private GoogleCredential mCredentiall;
+
 
     private EditText mUserInputCatch;
     private EditText mEditTextSuperJumbo;
@@ -89,9 +78,6 @@ public class HarvestActivity extends AppCompatActivity
     private Spinner mSpinnerHarvestNo;
     private Location mLocation;
 
-
-    private HarvestLogAdapter mLogAdapter;
-    RecyclerView recyclerView;
 
     private boolean mExitWithoutPrompt = true;
 
@@ -112,25 +98,15 @@ public class HarvestActivity extends AppCompatActivity
     private ValueRange mExistingRows;
 
 
-    private static final String[] PROJECTION = {
-            COLUMN_HARVEST_ID,
-            COLUMN_HARVEST_DATE,
-            COLUMN_HARVEST_USER,
-            COLUMN_HARVEST_GRADED_BY
-    };
-    public static final int INDEX_HARVEST_ID = 0;
-    public static final int INDEX_HARVEST_DATE = 1;
-    public static final int INDEX_HARVEST_USER = 2;
-    public static final int INDEX_HARVEST_GRADED = 3;
-
-    private static final int HARVEST_LOG_LOADER_ID = 1349;
-
-    @BindView(R.id.fab_post_data)
-    FloatingActionButton mFab;
+    /*    @BindView(R.id.fab_post_data)
+        FloatingActionButton mFab;*/
     @BindView(R.id.confirm_checkbox)
     CheckBox mCheckBox;
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
+
+    @BindView(R.id.reg_harvest_button)
+    Button mRegisterButton;
     private static final String JUMBO = "jumbo";
     private static final String SUPER_JUMBO = "super_jumbo";
     private static final String LARGE = "large";
@@ -149,7 +125,6 @@ public class HarvestActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mSharedPreferences = this.getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
         try {
             mGoogleAccount = (GoogleSignInAccount) getIntent().getExtras().get(SIGN_IN);
@@ -160,9 +135,11 @@ public class HarvestActivity extends AppCompatActivity
         mWeighingMode = mSharedPreferences.getBoolean(getString(R.string.logging_mode_weighing), false);
         mGradingMode = mSharedPreferences.getBoolean(getString(R.string.logging_mode_grading), false);
 
+
         if (mWeighingMode) setupWeighingUi();
         else if (mGradingMode) setupGradingUi();
         ButterKnife.bind(this);
+
         if (savedInstanceState != null) {
             if (mGradingMode) {
                 mEditTextLarge.setText(savedInstanceState.getString(LARGE));
@@ -183,7 +160,7 @@ public class HarvestActivity extends AppCompatActivity
             mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    finish();
+                    promptExit();
                 }
             });
         }
@@ -211,7 +188,7 @@ public class HarvestActivity extends AppCompatActivity
 
 
 //        mFab.setEnabled(false);
-        mFab.setOnClickListener(new View.OnClickListener()
+        mRegisterButton.setOnClickListener(new View.OnClickListener()
 
         {
             @Override
@@ -235,7 +212,7 @@ public class HarvestActivity extends AppCompatActivity
                 if (isChecked) {
                     mExitWithoutPrompt = false;
                     // mRegButton.setEnabled(true);
-                    mFab.setEnabled(true);
+                    mRegisterButton.setEnabled(true);
                     InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
                     if (mWeighingMode) {
@@ -255,7 +232,7 @@ public class HarvestActivity extends AppCompatActivity
 
                 } else {
                     //mRegButton.setEnabled(false);
-                    mFab.setEnabled(false);
+                    mRegisterButton.setEnabled(false);
 
                     if (mWeighingMode) {
                         mUserInputCatch.setEnabled(true);
@@ -272,7 +249,7 @@ public class HarvestActivity extends AppCompatActivity
         });
 
         if (mGradingMode) {
-            getSupportLoaderManager().initLoader(HARVEST_LOG_LOADER_ID, null, this);
+
         }
     }
 
@@ -283,58 +260,10 @@ public class HarvestActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.i(TAG, "onCLoader");
-        return new CursorLoader(this,
-                CONTENT_URI_HARVEST_LOG,
-                PROJECTION,
-                null,
-                null,
-                null);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        recyclerView.scrollToPosition(recyclerView.getLayoutManager().getItemCount() - 1);
-
-        if (mGradingMode) {
-            ArrayList<Integer> ungradedHarvests = new ArrayList<>();
-            data.moveToFirst();
-            // Looping backwards through harvestnumbers, adding every ungraded to the list
-            data.moveToLast();
-            while (!data.isBeforeFirst()) {
-                if (data.getString(INDEX_HARVEST_GRADED) == null) {
-                    ungradedHarvests.add(data.getInt(INDEX_HARVEST_ID));
-                }
-                data.moveToPrevious();
-            }
-            // disable mFab and checkbox if there's no harvests left to be graded
-            if (ungradedHarvests.size() == 0) {
-                //mFab.setEnabled(false);
-                mCheckBox.setVisibility(View.INVISIBLE);
-                mCheckBox.setEnabled(false);
-            } else {
-                mCheckBox.setVisibility(View.VISIBLE);
-                mCheckBox.setEnabled(true);
-            }
-            ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, ungradedHarvests);
-            adapter.notifyDataSetChanged();
-
-            mSpinnerHarvestNo.setAdapter(adapter);
-            mSpinnerHarvestNo.setSelection(mSpinnerPosition);
-        }
-        mLogAdapter.swapCursor(data);
-    }
-
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        mLogAdapter.swapCursor(null);
-    }
 
     private void setupWeighingUi() {
         setContentView(R.layout.activity_weighing);
+        mCheckBox = findViewById(R.id.confirm_checkbox);
 
         mUserInputCatch = findViewById(R.id.catch_edit_text);
         ((TextView) findViewById(R.id.user)).setText(
@@ -344,17 +273,7 @@ public class HarvestActivity extends AppCompatActivity
 
     private void setupGradingUi() {
         setContentView(R.layout.activity_grading);
-        recyclerView = findViewById(R.id.recycler_view_harvest_log);
-        //recyclerView.smoothScrollToPosition(0);
-
-        mLogAdapter = new HarvestLogAdapter(this);
-
-        //recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        layoutManager.setReverseLayout(true);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(mLogAdapter);
-        recyclerView.setOnTouchListener(this);
+        mCheckBox = findViewById(R.id.confirm_checkbox);
 
         mSpinnerHarvestNo = findViewById(R.id.spinner_harvest_no);
         mSpinnerHarvestNo.setFocusable(true);
@@ -363,6 +282,24 @@ public class HarvestActivity extends AppCompatActivity
         mEditTextSuperJumbo = findViewById(R.id.super_jumbo_et);
         mEditTextJumbo = findViewById(R.id.jumbo_et);
         mEditTextLarge = findViewById(R.id.large_et);
+
+        ArrayList<Integer> ungradedHarvests =
+                getIntent().getIntegerArrayListExtra("ungradedHarvests");
+        ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, ungradedHarvests);
+        adapter.notifyDataSetChanged();
+
+        // disable mFab and checkbox if there's no harvests left to be graded
+        if (ungradedHarvests.size() == 0) {
+            //mFab.setEnabled(false);
+            mCheckBox.setVisibility(View.INVISIBLE);
+            mCheckBox.setEnabled(false);
+        } else {
+            mCheckBox.setVisibility(View.VISIBLE);
+            mCheckBox.setEnabled(true);
+        }
+
+        mSpinnerHarvestNo.setAdapter(adapter);
+        mSpinnerHarvestNo.setSelection(mSpinnerPosition);
 
         mSpinnerHarvestNo.setOnTouchListener(this);
         mEditTextSuperJumbo.setOnTouchListener(this);
@@ -396,9 +333,7 @@ public class HarvestActivity extends AppCompatActivity
      */
     private void getResultsFromApi() {
         Log.i(TAG, "getResFromApi");
-        if (!isGooglePlayServicesAvailable()) {
-            acquireGooglePlayServices();
-        } else if (mCredential.getSelectedAccountName() == null) {
+        if (mCredential.getSelectedAccountName() == null) {
             mCredential.setSelectedAccountName(mGoogleAccount.getAccount().name);
         } else if (!isDeviceOnline()) {
             Toast.makeText(this, getString(R.string.connection_error), Toast.LENGTH_SHORT).show();
@@ -726,52 +661,6 @@ public class HarvestActivity extends AppCompatActivity
         return (networkInfo != null && networkInfo.isConnected());
     }
 
-    /**
-     * Check that Google Play services APK is installed and up to date.
-     *
-     * @return true if Google Play Services is available and up to
-     * date on this device; false otherwise.
-     */
-    private boolean isGooglePlayServicesAvailable() {
-        GoogleApiAvailability apiAvailability =
-                GoogleApiAvailability.getInstance();
-        final int connectionStatusCode =
-                apiAvailability.isGooglePlayServicesAvailable(this);
-        return connectionStatusCode == ConnectionResult.SUCCESS;
-    }
-
-    /**
-     * Attempt to resolve a missing, out-of-date, invalid or disabled Google
-     * Play Services installation via a user dialog, if possible.
-     */
-    private void acquireGooglePlayServices() {
-        GoogleApiAvailability apiAvailability =
-                GoogleApiAvailability.getInstance();
-        final int connectionStatusCode =
-                apiAvailability.isGooglePlayServicesAvailable(this);
-        if (apiAvailability.isUserResolvableError(connectionStatusCode)) {
-            showGooglePlayServicesAvailabilityErrorDialog(connectionStatusCode);
-        }
-    }
-
-
-    /**
-     * Display an error dialog showing that Google Play Services is missing
-     * or out of date.
-     *
-     * @param connectionStatusCode code describing the presence (or lack of)
-     *                             Google Play Services on this device.
-     */
-    void showGooglePlayServicesAvailabilityErrorDialog(
-            final int connectionStatusCode) {
-        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
-        Dialog dialog = apiAvailability.getErrorDialog(
-                HarvestActivity.this,
-                connectionStatusCode,
-                REQUEST_GOOGLE_PLAY_SERVICES);
-        dialog.show();
-    }
-
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         mExitWithoutPrompt = false;
@@ -799,6 +688,10 @@ public class HarvestActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
+        promptExit();
+    }
+
+    private void promptExit() {
         if (mExitWithoutPrompt) HarvestActivity.this.finish();
         else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);

@@ -11,12 +11,12 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.preference.PreferenceManager;
 
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
 import com.statsnail.roberts.statsnail.models.TidesData;
-import com.statsnail.roberts.statsnail.sync.NotifyService;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -83,6 +83,31 @@ public final class Utils {
         return dateFormat.format(date);
     }
 
+    // Returns true if the whole hour of time given (next low tide time) is after current time
+    public static boolean timeIsAfterNowOrMidnight(String time) {
+        //2017-11-12T20:24:00+01:00
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        int currentDay = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+
+        int year = Integer.valueOf(time.substring(0, 4));
+        int month = Integer.valueOf(time.substring(5, 7));
+        int day = Integer.valueOf(time.substring(8, 10));
+
+        if (year < currentYear) return false;
+        if (month < currentMonth) return false;
+        if (day < currentDay) return false;
+
+        int lowTideHours = Integer.valueOf(time.substring(11, 13));
+        int currentHours = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+
+        Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " date: " + currentDay +
+                "year: " + year + " month " + month + " day " + day + " currMontn " + currentMonth + " curryear: " + currentYear);
+
+        boolean notifyOnNext = lowTideHours >= currentHours || day > currentDay || month > currentMonth || year > currentYear;
+        Timber.d("notify on next: " + notifyOnNext);
+        return notifyOnNext;
+    }
 
     // Returns true if the whole hour of time given (next low tide time) is after current time
     public static boolean timeIsAfterNow(String time) {
@@ -90,8 +115,8 @@ public final class Utils {
         int currentHours = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
         int minutes = Calendar.getInstance().get(Calendar.MINUTE);
         boolean notifyOnNext = lowTideHours >= currentHours;
-        Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " = " + notifyOnNext);
-        return lowTideHours >= currentHours;
+
+        return notifyOnNext;
     }
 
     // returns true if tomorrow is last day of forecast
@@ -149,22 +174,28 @@ public final class Utils {
         return builder;
     }
 
-    public static String getPlaceName(Context context) throws IOException {
+    public static String getPlaceName(Context context, boolean homeLocation) throws IOException {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
-        String latitude = preference.getString(
-                MainActivityFull.EXTRA_LATITUDE, context.getResources().getString(R.string.default_latitude));
+        String defaultLat = context.getResources().getString(R.string.default_latitude);
+        String defaultLon = context.getResources().getString(R.string.default_longitude);
 
-        String longitude = preference.getString(
-                MainActivityFull.EXTRA_LONGITUDE, context.getResources().getString(R.string.default_longitude));
-        Timber.d("LON i getPlaceName: " + longitude);
+        String latitude = homeLocation ? preference.getString(MainActivityFull.HOME_LAT, defaultLat) :
+                preference.getString(MainActivityFull.EXTRA_LATITUDE, defaultLat);
+        String longitude = homeLocation ? preference.getString(MainActivityFull.HOME_LON, defaultLon) :
+                preference.getString(MainActivityFull.EXTRA_LONGITUDE, defaultLon);
+
+        Timber.d("LAT i getPlaceName: " + latitude);
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addresses = geocoder.getFromLocation(Double.valueOf(latitude), Double.valueOf(longitude), 1);
 
         if (addresses.size() != 0) {
             String subAdmin = addresses.get(0).getSubAdminArea();
             String adminArea = addresses.get(0).getAdminArea();
-            return subAdmin == null || subAdmin.equals("null") ?
-                    adminArea : subAdmin + ", " + adminArea;
+
+            return subAdmin != null && adminArea != null ? subAdmin + ", " + adminArea :
+                    subAdmin == null && adminArea != null ? adminArea :
+                            subAdmin != null && adminArea == null ? subAdmin : "Location unavailable";
+
         }
         return "Location unavailable";
     }
@@ -190,13 +221,13 @@ public final class Utils {
 
     public static void prepareNotification(Context context, List<TidesData.Waterlevel> waterlevels) {
         Timber.d("prepareNotfic");
+
         // get next low tide to notify about
         TidesData.Waterlevel nextLow = null;
         TidesData.Waterlevel nextHighAfterLow = null;
         for (int i = 0; i < waterlevels.size(); i++) {
-            Timber.d("sjekker levels nr " + i);
             TidesData.Waterlevel l = waterlevels.get(i);
-            if (l.flag.equals("low") && Utils.timeIsAfterNow(Utils.getFormattedTime(l.dateTime))) {
+            if (l.flag.equals("low") && timeIsAfterNowOrMidnight(l.dateTime)) {// Utils.timeIsAfterNow(Utils.getFormattedTime(l.dateTime))) {
                 nextLow = (nextLow == null || (l.dateTime.compareTo(nextLow.dateTime) < 0) ? l : nextLow);
                 if (i + 1 < waterlevels.size())
                     nextHighAfterLow = waterlevels.get(i + 1);
@@ -206,6 +237,7 @@ public final class Utils {
         if (nextLow != null) {
 
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+
             String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
 
             Calendar calendarLowTide = Calendar.getInstance();
@@ -219,21 +251,28 @@ public final class Utils {
             if (((notificationTime + offsetMargin) < (calendarLowTide.getTimeInMillis() - offset)))
                 notificationTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
 
-            Intent myIntent = new Intent(context, NotifyService.class);
+            Intent myIntent = new Intent(context, NotifyBroadcast.class);
             myIntent.putExtra("nextLowTideTime", (calendarLowTide.getTimeInMillis()));
             myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
+
             if (nextHighAfterLow != null) {
                 myIntent.putExtra("nextHighTideTime", (nextHighAfterLow.dateTime));
                 myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
             }
 
-            PendingIntent pendingIntent = PendingIntent.getService(context.getApplicationContext(), 0, myIntent, 0);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, myIntent, 0);
             Timber.d("TIME: " + Utils.getTime(notificationTime));
             // Prepare notification only if it hasn't already been shown for this low tide
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            long previous = preferences.getLong(PREVIOUS_NOTIFICATION_TIME, 0);
-            if (!Utils.getTime(previous).equals(Utils.getTime(notificationTime))) {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+            long previousNotificationTime = preferences.getLong(PREVIOUS_NOTIFICATION_TIME, 0);
+            if (!Utils.getTime(previousNotificationTime).equals(Utils.getTime(notificationTime))) {
+                if (Build.VERSION.SDK_INT >= 23)
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+                else if (Build.VERSION.SDK_INT >= 19)
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+                else alarmManager.set(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+
+                Timber.d("alarm set for " + Utils.getTime(notificationTime));
                 preferences.edit().putLong(PREVIOUS_NOTIFICATION_TIME, notificationTime).apply();
             }
         }

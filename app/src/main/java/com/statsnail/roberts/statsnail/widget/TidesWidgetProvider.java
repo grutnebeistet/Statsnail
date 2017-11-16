@@ -27,7 +27,7 @@ public class TidesWidgetProvider extends AppWidgetProvider {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_tides);
             String place = "Somewhere";
             try {
-                place = Utils.getPlaceName(context);
+                place = Utils.getPlaceName(context, true);
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }

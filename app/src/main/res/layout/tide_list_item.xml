@@ -2,14 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="36dp"
-    android:orientation="vertical"
-    tools:layout_margin="32dp">
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/padding_half"
+    android:orientation="vertical">
 
     <View
         android:id="@+id/divider_list_item"
         style="@style/Divider"
-        android:layout_marginBottom="@dimen/padding_half"
+        android:paddingBottom="@dimen/padding_half"
         android:layout_marginLeft="@dimen/padding"
         android:layout_marginRight="@dimen/padding" />
 
@@ -55,8 +55,8 @@
 
             <ImageView xmlns:tools="http://schemas.android.com/tools"
                 android:id="@+id/tide_item_flag_img"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="@dimen/list_item_img_size"
+                android:layout_height="@dimen/list_item_img_size"
                 android:layout_alignParentEnd="true"
                 android:layout_gravity="center_vertical"
                 android:contentDescription="@string/content_desc_tide_img"

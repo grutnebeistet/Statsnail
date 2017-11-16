@@ -1,6 +1,5 @@
 package com.statsnail.roberts.statsnail.fragments;
 
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
@@ -8,20 +7,15 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -32,15 +26,13 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
 import com.statsnail.roberts.statsnail.adapters.TidesDataAdapter;
+import com.statsnail.roberts.statsnail.adapters.WindsDataAdapter;
 import com.statsnail.roberts.statsnail.data.TidesContract;
-import com.statsnail.roberts.statsnail.models.TidesData;
 import com.statsnail.roberts.statsnail.sync.StatsnailSyncTask;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -55,6 +47,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         OnMapReadyCallback, android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
     @BindView(R.id.tides_recycler_view)
     RecyclerView mTidesRecyclerView;
+    @BindView(R.id.winds_recycler_view)
+    RecyclerView mWindsRecyclerView;
     @BindView(R.id.location_name)
     TextView mLocationTextView;
     @BindView(R.id.forecast_date)
@@ -90,6 +84,20 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     public static final int INDEX_FLAG = 2;
     public static final int INDEX_ERROR = 4;
 
+    public static final String[] WINDS_PROJECTION = {
+            TidesContract.TidesEntry.COLUMN_WINDS_DATE,
+            TidesContract.TidesEntry.COLUMN_TIME_OF_WIND,
+            TidesContract.TidesEntry.COLUMN_WIND_DIR_DEG,
+            TidesContract.TidesEntry.COLUMN_WIND_SPEED,
+            TidesContract.TidesEntry.COLUMN_WIND_DIRECTION
+    };
+    public static final int INDEX_WIND_DATE = 0;
+    public static final int INDEX_WIND_TIME = 1;
+    public static final int INDEX_WIND_DIR_DEG = 2;
+    public static final int INDEX_WIND_SPEED = 3;
+    public static final int INDEX_WIND_DIR = 4;
+
+
     public static final String EXTRA_TIDE_QUERY_DATE = "tides_date";
 
     String TAG = TidesFragment.class.getSimpleName();
@@ -116,8 +124,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     };
     private static LatLng LAT_LNG;
     private Location mLocation;
-    private TidesDataAdapter mAdapter;
-    private TidesData mTidesData;
+    private TidesDataAdapter mTidesAdapter;
+    private WindsDataAdapter mWindsAdapter;
     private float mMapZoom = 8;
     SharedPreferences mPreferences;
     private int mVisibility = View.VISIBLE;
@@ -141,42 +149,63 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
             mMapZoom = savedInstanceState.getFloat(MAP_ZOOM);
             double longitude = savedInstanceState.getDouble(MainActivityFull.EXTRA_LONGITUDE);
             double latitude = savedInstanceState.getDouble(MainActivityFull.EXTRA_LATITUDE);
-            Timber.d("longitude saved : " + longitude);
-            LAT_LNG = new LatLng(latitude, longitude);
+            Timber.d("latitude saved : " + latitude);
+
             SharedPreferences.Editor editor = mPreferences.edit();
             editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(latitude));
             editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(longitude));
-            Timber.d("longitude to preference : " + String.valueOf(longitude));
-            editor.commit();
-        }
-        if (savedInstanceState == null) {
-            initLocation();
+            Timber.d("latitude to preference : " + String.valueOf(latitude));
+            editor.apply();
+
+            LAT_LNG = new LatLng(latitude, longitude);
         }
 
         mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis())).apply();
-        mAdapter = new TidesDataAdapter(getActivity());
+        mTidesAdapter = new TidesDataAdapter(getActivity());
+        mWindsAdapter = new WindsDataAdapter(getActivity());
 
 
-        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
+        //getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
+        // restartLoader(true);
 
     }
 
     private void initLocation() {
-        mLocation = getArguments().getParcelable(LOCATION);
-        if (mLocation != null)
-            LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+        try {
+            mLocation = getArguments().getParcelable(LOCATION);
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        boolean useHomeLocation = true;
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(mLocation.getLongitude()));
-        editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(mLocation.getLatitude()));
+        String longitude, latitude;
+        if (mLocation != null) {
+            LAT_LNG = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
+            longitude = String.valueOf(mLocation.getLongitude());
+            latitude = String.valueOf(mLocation.getLatitude());
+        } else {
+            longitude = getString(R.string.default_longitude);
+            latitude = getString(R.string.default_latitude);
+            LAT_LNG = new LatLng(Double.valueOf(latitude),
+                    Double.valueOf(longitude));
+            useHomeLocation = false;
+            showSnackbar("Set to default location: Trondheim");
+        }
+        editor.putString(MainActivityFull.EXTRA_LONGITUDE, longitude);
+        editor.putString(MainActivityFull.EXTRA_LATITUDE, latitude);
         editor.commit();
 
-        updateValuesOnLocationChange();
+        updateValuesOnLocationChange(useHomeLocation);
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if (savedInstanceState == null) {
+            initLocation();
+        }
 
+        restartLoader(true);
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -204,7 +233,9 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                         return;
                     } else {
                         mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, tomorrow).apply();
+                        mDateTimeTextView.setText(Utils.getPrettyDate(Utils.getDateInMillisec(tomorrow))); // TODO not very efficient, lag egen metode
                         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
+                        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_WINDS, null, TidesFragment.this);
                     }
 
 
@@ -212,7 +243,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                     Timber.e("failed to increase date");
                     e.printStackTrace();
                 }
-                mPrevDayImg.setVisibility(View.VISIBLE);
+                mPrevDay.setVisibility(View.VISIBLE);
             }
         });
         mPrevDay.setOnClickListener(new View.OnClickListener() {
@@ -221,9 +252,13 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
                 String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                         Utils.getDate(System.currentTimeMillis()));
+
                 try {
-                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, Utils.getDateMinusOne(currentDate)).apply();
+                    String yesterday = Utils.getDateMinusOne(currentDate);
+                    mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, yesterday).apply();
+                    mDateTimeTextView.setText(Utils.getPrettyDate(Utils.getDateInMillisec(yesterday)));
                     getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
+                    getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_WINDS, null, TidesFragment.this);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -241,7 +276,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         if (!Utils.workingConnection(getActivity())) {
             Timber.d("noConnect");
             mNextDayImg.setVisibility(View.INVISIBLE);
-            mPrevDayImg.setVisibility(View.INVISIBLE);
+            mPrevDay.setVisibility(View.INVISIBLE);
             showSnackbar(getString(R.string.connection_error));
         }
     }
@@ -253,11 +288,26 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         }
     }
 
+    private void restartLoader(boolean homeLocation) {
+        try {
+            mLocationTextView.setText(Utils.getPlaceName(getActivity(), homeLocation));
+            String dateShown = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
+                    Utils.getDate(System.currentTimeMillis()));
+            mDateTimeTextView.setText(Utils.getPrettyDate(Utils.getDateInMillisec(dateShown)));
+        } catch (IOException | NullPointerException | ParseException e) {
+            e.printStackTrace();
+            mErrorTextView.setText(R.string.error_unknown);
+        }
+        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
+        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_WINDS, null, this);
+    }
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tides, container, false);
         ButterKnife.bind(this, view);
+
         if (savedInstanceState != null) {
             //      mLocationTextView.setText(savedInstanceState.getString(PLACE_NAME));
             mVisibility = savedInstanceState.getInt(CONTAINER_VISIBILITY);
@@ -265,21 +315,33 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         }
 
         mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mTidesRecyclerView.setAdapter(mAdapter);
+        mTidesRecyclerView.setAdapter(mTidesAdapter);
+
+        mWindsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.HORIZONTAL,false));
+        mWindsRecyclerView.setAdapter(mWindsAdapter);
         return view;
     }
 
     @Override
     public android.support.v4.content.Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        String sortOrder, selection;
+        String[] selectionArgs = new String[]{mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
+                Utils.getDate(System.currentTimeMillis()))};
+        ;
         switch (i) {
             case LOADER_ID_TIDES:
-                String sortOrder = TidesContract.TidesEntry.COLUMN_TIME_OF_LEVEL + " ASC";
-                String selection = TidesContract.TidesEntry.COLUMN_TIDES_DATE + "=?";
-                String[] selectionArgs = new String[]{mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
-                        Utils.getDate(System.currentTimeMillis()))};
+                sortOrder = TidesContract.TidesEntry.COLUMN_TIME_OF_LEVEL + " ASC";
+                selection = TidesContract.TidesEntry.COLUMN_TIDES_DATE + "=?";
 
-                return new android.support.v4.content.CursorLoader(getActivity(), TidesContract.TidesEntry.CONTENT_URI,
+                return new android.support.v4.content.CursorLoader(getActivity(), TidesContract.TidesEntry.CONTENT_URI_TIDES,
                         TIDES_PROJECTION, selection, selectionArgs, sortOrder);
+
+            case LOADER_ID_WINDS:
+                sortOrder = TidesContract.TidesEntry.COLUMN_TIME_OF_WIND + " ASC";
+                selection = TidesContract.TidesEntry.COLUMN_WINDS_DATE + "=?";
+
+                return new android.support.v4.content.CursorLoader(getActivity(), TidesContract.TidesEntry.CONTENT_URI_WINDS,
+                        WINDS_PROJECTION, selection, selectionArgs, sortOrder);
         }
         return null;
     }
@@ -291,59 +353,55 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                 Utils.getDate(System.currentTimeMillis()));
         if (currentDate.compareTo(Utils.getDate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1))) < 0) {
-            mPrevDayImg.setVisibility(View.INVISIBLE);
+            mPrevDay.setVisibility(View.INVISIBLE);
+        }
+        if (loader.getId() == LOADER_ID_WINDS) {
+            mWindsAdapter.swapCursor(cursor);
+        }
+        if (loader.getId() == LOADER_ID_TIDES) { // TODO method
+            if (cursor == null || cursor.getCount() == 0) {
+                mErrorTextView.setVisibility(View.VISIBLE);
+                mErrorTextView.setText(R.string.connection_error);
+
+                mNextDayImg.setVisibility(View.INVISIBLE);
+            } else if (cursor.getCount() <= 2) {
+                cursor.moveToFirst();
+                mErrorTextView.setVisibility(View.VISIBLE);
+                mErrorTextView.setText(cursor.getString(INDEX_ERROR));
+                //  Toast.makeText(getActivity(), "Error: " + cursor.getString(INDEX_ERROR), Toast.LENGTH_SHORT).show();
+                mNextDayImg.setVisibility(View.INVISIBLE);
+                mTidesAdapter.swapCursor(null);
+            } else {
+                mTidesAdapter.swapCursor(cursor);
+                mErrorTextView.setVisibility(View.GONE);
+                mNextDayImg.setVisibility(View.VISIBLE);
+            }
         }
 
-        if (cursor == null || cursor.getCount() == 0) {
-            mErrorTextView.setVisibility(View.VISIBLE);
-            mErrorTextView.setText(R.string.connection_error);
-
-            mNextDayImg.setVisibility(View.INVISIBLE);
-        } else if (cursor.getCount() <= 2) {
-            cursor.moveToFirst();
-            mErrorTextView.setVisibility(View.VISIBLE);
-            mErrorTextView.setText(cursor.getString(INDEX_ERROR));
-            //  Toast.makeText(getActivity(), "Error: " + cursor.getString(INDEX_ERROR), Toast.LENGTH_SHORT).show();
-            mNextDayImg.setVisibility(View.INVISIBLE);
-            mAdapter.swapCursor(null);
-        } else {
-            mAdapter.swapCursor(cursor);
-            mErrorTextView.setVisibility(View.GONE);
-            mNextDayImg.setVisibility(View.VISIBLE);
-        }
-        try {
-            mLocationTextView.setText(Utils.getPlaceName(getActivity()));
-            String dateShown = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
-                    Utils.getDate(System.currentTimeMillis()));
-            mDateTimeTextView.setText(Utils.getPrettyDate(Utils.getDateInMillisec(dateShown)));
-        } catch (IOException | NullPointerException | ParseException e) {
-            e.printStackTrace();
-            mErrorTextView.setText(R.string.error_unknown);
-            return;
-        }
     }
 
     @Override
     public void onLoaderReset(android.support.v4.content.Loader<Cursor> loader) {
-        mAdapter.swapCursor(null);
+        mTidesAdapter.swapCursor(null);
+        mWindsAdapter.swapCursor(null);
     }
 
-    private void updateValuesOnLocationChange() {
+    private void updateValuesOnLocationChange(final boolean homeLocation) {
         Timber.d("updateValuesOnLocationChange");
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                StatsnailSyncTask.syncData(getActivity());
+                StatsnailSyncTask.syncData(getActivity(), homeLocation);
             }
         });
         thread.start();
-        getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
+        restartLoader(homeLocation);
 
     }
 
     @Override
     public void onMapReady(GoogleMap map) {
-        Timber.d("onMapReady....");
+        Timber.d("onMapReady....LAT_LONG NULL: " + (LAT_LNG == null));
         mMap = map;
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LAT_LNG, mMapZoom));
 
@@ -358,7 +416,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                 editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(latLng.longitude));
                 editor.commit();
 
-                updateValuesOnLocationChange();
+                updateValuesOnLocationChange(false);
                 mVisibility = View.VISIBLE;
             }
         });
@@ -381,7 +439,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     public void onSaveInstanceState(Bundle outState) {
         // Store the selected map style, so we can assign it when the activity resumes.
         outState.putInt(SELECTED_STYLE, mSelectedStyleId);
-        outState.putFloat(MAP_ZOOM, mMap.getCameraPosition().zoom);
+        if (mMap != null) outState.putFloat(MAP_ZOOM, mMap.getCameraPosition().zoom);
         // outState.putParcelable(LOCATION, mLocation);
         outState.putDouble(MainActivityFull.EXTRA_LATITUDE, LAT_LNG.latitude);
         outState.putDouble(MainActivityFull.EXTRA_LONGITUDE, LAT_LNG.longitude);
@@ -391,7 +449,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     }
 
 
-    @Override
+   /* @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.styled_map, menu);
         super.onCreateOptionsMenu(menu, inflater);
@@ -403,33 +461,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
             showStylesDialog();
         }
         return true;
-    }
+    }*/
 
-    /**
-     * Shows a dialog listing the styles to choose from, and applies the selected
-     * style when chosen.
-     */
-    private void showStylesDialog() {
-        List<String> styleNames = new ArrayList<>();
-        for (int style : mStyleIds) {
-            styleNames.add(getString(style));
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(getString(R.string.style_choose));
-        builder.setItems(styleNames.toArray(new CharSequence[styleNames.size()]),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mSelectedStyleId = mStyleIds[which];
-                        String msg = getString(R.string.style_set_to, getString(mSelectedStyleId));
-                        Toast.makeText(getActivity().getBaseContext(), msg, Toast.LENGTH_SHORT).show();
-                        Timber.d(msg);
-                        setSelectedStyle();
-                    }
-                });
-        builder.show();
-    }
 
     /**
      * Creates a {@link MapStyleOptions} object via loadRawResourceStyle() (or via the
@@ -437,6 +470,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
      * via the setMapStyle() method.
      */
     private void setSelectedStyle() {
+        mSelectedStyleId = mPreferences.getInt(SELECTED_STYLE, R.string.style_label_default);
+        Timber.d("setSelStyle style: " + getString(mSelectedStyleId));
         MapStyleOptions style;
         switch (mSelectedStyleId) {
             case R.string.style_label_retro:

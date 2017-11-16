@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/harvest_activity_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/harvest_background"
-    android:gravity="center_vertical">
+    android:orientation="vertical">
 
-    <include layout="@layout/app_bar" />
+    <include
+        layout="@layout/app_bar" />
 
     <android.support.v7.widget.CardView
         android:id="@+id/cardview_container_c"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/app_bar_layout"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
@@ -67,25 +67,24 @@
 
         </LinearLayout>
     </android.support.v7.widget.CardView>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab_post_data"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="@dimen/fab_margin"
-        android:contentDescription="@string/content_desc_weighing_fab"
-        android:scaleType="center"
-        android:src="@android:drawable/ic_menu_add"
-        app:elevation="6dp" />
+    <!--
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_post_data"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="@dimen/fab_margin"
+            android:contentDescription="@string/content_desc_weighing_fab"
+            android:scaleType="center"
+            android:src="@android:drawable/ic_menu_add"
+            app:elevation="6dp" />-->
 
 
     <android.support.v7.widget.CardView
         android:id="@+id/cardview_container_b"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/cardview_container_c"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
@@ -132,8 +131,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignEnd="@id/catch_edit_text"
-                android:layout_marginStart="@dimen/padding"
                 android:layout_marginEnd="8dp"
+                android:layout_marginStart="@dimen/padding"
                 android:contentDescription="@string/content_desc_kg_label"
                 android:paddingTop="16dp"
                 android:text="@string/kg_as_measure"
@@ -145,7 +144,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:buttonTint="@color/colorAccent" />
+                android:buttonTint="@color/colorPrimary_700" />
         </LinearLayout>
     </android.support.v7.widget.CardView>
-</RelativeLayout>
+
+    <Button
+        android:id="@+id/reg_harvest_button"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_margin="@dimen/padding_double"
+        android:background="@color/colorPrimary_700"
+        android:text="Register Snails"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
+        android:textColor="#FFFFFF" />
+</LinearLayout>

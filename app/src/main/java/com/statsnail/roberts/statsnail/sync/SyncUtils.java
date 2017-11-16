@@ -12,6 +12,7 @@ import com.firebase.jobdispatcher.FirebaseJobDispatcher;
 import com.firebase.jobdispatcher.GooglePlayDriver;
 import com.firebase.jobdispatcher.Job;
 import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.RetryStrategy;
 import com.firebase.jobdispatcher.Trigger;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
@@ -24,7 +25,7 @@ import timber.log.Timber;
  */
 
 public class SyncUtils {
-    private static final int SYNC_INTERVAL_HOURS = 12;
+    private static final int SYNC_INTERVAL_HOURS = 5;
     private static final int SYNC_INTERVAL_SECONDS = (int) TimeUnit.HOURS.toSeconds(SYNC_INTERVAL_HOURS);
     private static final int SYNC_FLEXTIME_SECONDS = SYNC_INTERVAL_SECONDS / 3;
 
@@ -36,29 +37,29 @@ public class SyncUtils {
         Driver driver = new GooglePlayDriver(context);
         FirebaseJobDispatcher jobDispatcher = new FirebaseJobDispatcher(driver);
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String lowTideTime = preferences.getString("nextLowTideTime", Utils.getTime());
-        int timeToDispatch;
+        boolean isSyncOnlyWiFi = false; // TODO setting this
 
+        // if prefs ikke har notifik-tid, sett job til
 
         Job syncTidesJob = jobDispatcher.newJobBuilder()
                 .setService(FirebaseJobService.class)
+                .setConstraints(isSyncOnlyWiFi ? Constraint.ON_UNMETERED_NETWORK : Constraint.ON_ANY_NETWORK)
                 .setTag(TIDES_SYNC_TAG)
-                .setConstraints(Constraint.ON_ANY_NETWORK)
                 .setLifetime(Lifetime.FOREVER)
                 .setRecurring(true)
                 .setTrigger(Trigger.executionWindow(
                         SYNC_FLEXTIME_SECONDS,
                         SYNC_FLEXTIME_SECONDS + SYNC_FLEXTIME_SECONDS))
                 .setReplaceCurrent(true)
+                .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
                 .build();
 
+        Timber.d("Schedule job...");
         jobDispatcher.schedule(syncTidesJob);
-
     }
 
     synchronized public static void initialize(@NonNull final Context context) {
-
+        Timber.d("initialize");
         /*
          * Only perform initialization once per app lifetime. If initialization has already been
          * performed, we have nothing to do in this method.
@@ -70,9 +71,9 @@ public class SyncUtils {
         scheduleFirebaseJobDispatcher(context);
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        if (preferences.getString("nextLowTideLevel", null) == null) {
-            startImmediateSync(context);
-        }
+        //      if (preferences.getString("nextLowTideTime", null) == null) {
+        startImmediateSync(context);
+//        }
     }
 
     public static void startImmediateSync(@NonNull final Context context) {

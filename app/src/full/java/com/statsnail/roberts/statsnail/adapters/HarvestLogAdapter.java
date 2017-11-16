@@ -15,6 +15,7 @@ import com.google.api.services.sheets.v4.model.ValueRange;
 
 import com.statsnail.roberts.statsnail.activities.HarvestActivity;
 import com.statsnail.roberts.statsnail.R;
+import com.statsnail.roberts.statsnail.fragments.HarvestChooserFragment;
 
 
 public class HarvestLogAdapter extends RecyclerView.Adapter<HarvestLogAdapter.LogViewHolder> {
@@ -41,11 +42,11 @@ public class HarvestLogAdapter extends RecyclerView.Adapter<HarvestLogAdapter.Lo
         //String row = mValueRange.getValues().get(position).toString();
         //Log.i(TAG, "Row: " + row);
         mCursor.moveToPosition(position);
-        String name = mCursor.getString(HarvestActivity.INDEX_HARVEST_USER);
-        int harvestID = mCursor.getInt(HarvestActivity.INDEX_HARVEST_ID);
-        int isGraded = mCursor.getInt(HarvestActivity.INDEX_HARVEST_GRADED);
-        String gradedDate = mCursor.getString(HarvestActivity.INDEX_HARVEST_DATE); // TODO GRADED DATE*
-        String gradedBy = mCursor.getString(HarvestActivity.INDEX_HARVEST_GRADED);
+        String name = mCursor.getString(HarvestChooserFragment.INDEX_HARVEST_USER);
+        int harvestID = mCursor.getInt(HarvestChooserFragment.INDEX_HARVEST_ID);
+        int isGraded = mCursor.getInt(HarvestChooserFragment.INDEX_HARVEST_GRADED);
+        String gradedDate = mCursor.getString(HarvestChooserFragment.INDEX_HARVEST_DATE); // TODO GRADED DATE*
+        String gradedBy = mCursor.getString(HarvestChooserFragment.INDEX_HARVEST_GRADED);
 
         String graded;
         if (gradedBy != null){

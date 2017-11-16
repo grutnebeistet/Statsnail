@@ -97,33 +97,38 @@ public class HarvestUtils {
             cursor.close();
         }
 
-
-        List<List<Object>> logs = result.getValues(); // TODO flytte DB stuff til egen metode/ kun lagre nye innføringer?
-        if (!result.isEmpty() && numRows >= 1) {
-            for (int i = 1; i < logs.size(); i++) {
-                List<Object> lb = logs.get(i);
-                String harvestNo = lb.get(0).toString();
-                String date = lb.get(1).toString();
-                String name = lb.get(5).toString();
-                String name_grader = lb.size() > 6 ? lb.get(10).toString() : null;
+        try {
 
 
-                ContentValues values = new ContentValues();
-                values.put(COLUMN_HARVEST_ID, Integer.valueOf(harvestNo));
-                values.put(COLUMN_HARVEST_DATE, date);
-                values.put(COLUMN_HARVEST_USER, name);
-                // a row with size > 6 means it has been graded - retrieve graders name
-                if (lb.size() > 6) {
-                    // Log.i(TAG, "Been graded " + harvestNo);
-                    values.put(COLUMN_HARVEST_GRADED_BY, name_grader);
-                } else {
-                    // values.put(COLUMN_HARVEST_GRADED_BY, null);
-                    // Log.i(TAG, "Not graded " + harvestNo);
-                } // TODO bulkinsert
+            List<List<Object>> logs = result.getValues(); // TODO flytte DB stuff til egen metode/ kun lagre nye innføringer?
+            if (!result.isEmpty() && numRows >= 1) {
+                for (int i = 1; i < logs.size(); i++) {
+                    List<Object> lb = logs.get(i);
+                    String harvestNo = lb.get(0).toString();
+                    String date = lb.get(1).toString();
+                    String name = lb.get(5).toString();
+                    String name_grader = lb.size() > 6 ? lb.get(10).toString() : null;
 
-                context.getContentResolver().insert(CONTENT_URI_HARVEST_LOG, values);
-                //   Log.i(TAG, "lb: " + lb + " lb.size: " +lb.size() + "\nHarvNo " + harvestNo + " dato: " + date + " name: " + name);
+
+                    ContentValues values = new ContentValues();
+                    values.put(COLUMN_HARVEST_ID, Integer.valueOf(harvestNo));
+                    values.put(COLUMN_HARVEST_DATE, date);
+                    values.put(COLUMN_HARVEST_USER, name);
+                    // a row with size > 6 means it has been graded - retrieve graders name
+                    if (lb.size() > 6) {
+                        // Log.i(TAG, "Been graded " + harvestNo);
+                        values.put(COLUMN_HARVEST_GRADED_BY, name_grader);
+                    } else {
+                        // values.put(COLUMN_HARVEST_GRADED_BY, null);
+                        // Log.i(TAG, "Not graded " + harvestNo);
+                    } // TODO bulkinsert
+
+                    context.getContentResolver().insert(CONTENT_URI_HARVEST_LOG, values);
+                    //   Log.i(TAG, "lb: " + lb + " lb.size: " +lb.size() + "\nHarvNo " + harvestNo + " dato: " + date + " name: " + name);
+                }
             }
+        }catch (IndexOutOfBoundsException e){
+            e.printStackTrace();
         }
     }
 }

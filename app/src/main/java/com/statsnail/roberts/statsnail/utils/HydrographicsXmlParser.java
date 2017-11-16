@@ -137,8 +137,11 @@ public class HydrographicsXmlParser {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
-            if (parser.getName().equals("nodata")) {
-                if (parser.getAttributeName(0).equals("info")) {
+
+            if (parser.getName().equals("nodata") ||
+                    parser.getName().equals("service")) {
+                if (parser.getAttributeName(0).equals("info") ||
+                        parser.getAttributeName(0).equals("cominfo")) {
                     tidesValues = new ContentValues[1];
                     ContentValues error = new ContentValues();
                     error.put(TidesContract.TidesEntry.COLUMN_TIDE_ERROR_MSG, parser.getAttributeValue(0));
@@ -187,7 +190,6 @@ public class HydrographicsXmlParser {
             if (parser.getEventType() != XmlPullParser.START_TAG) continue;
             String name = parser.getName();
             if (name.equals("data")) {
-                dataType = parser.getAttributeValue(0);
                 while (parser.next() != XmlPullParser.END_TAG) {
                     if (parser.getEventType() != XmlPullParser.START_TAG)
                         continue;
@@ -206,15 +208,18 @@ public class HydrographicsXmlParser {
 
                 // prepare notification only if parsed area is actual location
                 // No point in checking levels beyond the first 4 regarding notification
+                // TODO prepare only if not already prepared for this time
                 String homeLat = preferences.getString(
                         MainActivityFull.HOME_LAT, mContext.getString(R.string.default_latitude));
                 String homeLong = preferences.getString(
                         MainActivityFull.HOME_LON, mContext.getString(R.string.default_longitude));
 
+                Timber.d("Parsing hydrographiics...");
+                // and only if the data's being parsed utilizing users actual location
                 if (latitude != null && longitude != null &&
                         latitude.substring(0, 7).equals(homeLat.substring(0, 7))
                         && longitude.substring(0, 7).equals(homeLong.substring(0, 7)))
-                    Utils.prepareNotification(mContext, waterlevels.subList(0, 4));
+                    Utils.prepareNotification(mContext, waterlevels.subList(0, 6));
 
                 tidesValues = new ContentValues[waterlevels.size()];
 

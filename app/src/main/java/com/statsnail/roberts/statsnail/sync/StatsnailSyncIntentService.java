@@ -14,6 +14,6 @@ public class StatsnailSyncIntentService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
         Timber.d("onHandleIntent, call syncData");
-        StatsnailSyncTask.syncData(this);
+        StatsnailSyncTask.syncData(this, true);
     }
 }
