@@ -215,11 +215,11 @@ public class HydrographicsXmlParser {
                         MainActivityFull.HOME_LON, mContext.getString(R.string.default_longitude));
 
                 Timber.d("Parsing hydrographiics...");
-                // and only if the data's being parsed utilizing users actual location
+                // and only if the data's being parsed utilizing users actual (home) location
                 if (latitude != null && longitude != null &&
                         latitude.substring(0, 7).equals(homeLat.substring(0, 7))
                         && longitude.substring(0, 7).equals(homeLong.substring(0, 7)))
-                    Utils.prepareNotification(mContext, waterlevels.subList(0, 6));
+                    NotificationUtils.prepareNotification(mContext.getApplicationContext(), waterlevels.subList(0, 6));
 
                 tidesValues = new ContentValues[waterlevels.size()];
 

@@ -122,7 +122,6 @@ public class TidesWidgetService extends RemoteViewsService {
             if (tideData != null)
                 tideData.close();
         }
-
     }
 }
 

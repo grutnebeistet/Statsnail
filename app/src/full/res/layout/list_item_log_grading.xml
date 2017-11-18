@@ -24,13 +24,14 @@
     <RelativeLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="2">
+        android:layout_weight="2.2">
 
         <TextView
             android:id="@+id/ll_harvest_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/dim_text"
+            android:maxLines="1"
             android:textStyle="italic"
             android:paddingStart="@dimen/activity_margin"
             android:paddingEnd="@dimen/activity_margin"

@@ -28,15 +28,11 @@ import java.util.concurrent.TimeUnit;
 
 import timber.log.Timber;
 
-import static android.content.Context.ALARM_SERVICE;
-
 /**
  * Created by Adrian on 24/10/2017.
  */
 
 public final class Utils {
-
-    private final static String PREVIOUS_NOTIFICATION_TIME = "prev_not";
 
     // returns millisec from string date
     public static long getDateInMillisec(String dateString) throws ParseException {
@@ -84,7 +80,7 @@ public final class Utils {
     }
 
     // Returns true if the whole hour of time given (next low tide time) is after current time
-    public static boolean timeIsAfterNowOrMidnight(String time) {
+    public static boolean timeIsAfterNowInclMidnight(String time) {
         //2017-11-12T20:24:00+01:00
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
@@ -100,9 +96,6 @@ public final class Utils {
 
         int lowTideHours = Integer.valueOf(time.substring(11, 13));
         int currentHours = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-
-        Timber.d("lowTideHours " + lowTideHours + " > " + "currentHours " + currentHours + " date: " + currentDay +
-                "year: " + year + " month " + month + " day " + day + " currMontn " + currentMonth + " curryear: " + currentYear);
 
         boolean notifyOnNext = lowTideHours >= currentHours || day > currentDay || month > currentMonth || year > currentYear;
         Timber.d("notify on next: " + notifyOnNext);
@@ -146,6 +139,7 @@ public final class Utils {
     public static String getFormattedDate(String rawDate) {
         return rawDate.substring(0, 10);
     }
+
 
     // Returns current time in format hh:mm
     public static String getTime() {
@@ -219,63 +213,5 @@ public final class Utils {
         return (networkInfo != null && networkInfo.isConnected());
     }
 
-    public static void prepareNotification(Context context, List<TidesData.Waterlevel> waterlevels) {
-        Timber.d("prepareNotfic");
 
-        // get next low tide to notify about
-        TidesData.Waterlevel nextLow = null;
-        TidesData.Waterlevel nextHighAfterLow = null;
-        for (int i = 0; i < waterlevels.size(); i++) {
-            TidesData.Waterlevel l = waterlevels.get(i);
-            if (l.flag.equals("low") && timeIsAfterNowOrMidnight(l.dateTime)) {// Utils.timeIsAfterNow(Utils.getFormattedTime(l.dateTime))) {
-                nextLow = (nextLow == null || (l.dateTime.compareTo(nextLow.dateTime) < 0) ? l : nextLow);
-                if (i + 1 < waterlevels.size())
-                    nextHighAfterLow = waterlevels.get(i + 1);
-            }
-        }
-
-        if (nextLow != null) {
-
-            AlarmManager alarmManager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-
-            String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
-
-            Calendar calendarLowTide = Calendar.getInstance();
-            calendarLowTide.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
-            calendarLowTide.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
-            long offset = TimeUnit.HOURS.toMillis(3);
-            long offsetMargin = TimeUnit.MINUTES.toMillis(1);
-            long notificationTime = calendarLowTide.getTimeInMillis() - offset;
-
-            // set notification time to one minute from now if it's less than 3 hours till low tide
-            if (((notificationTime + offsetMargin) < (calendarLowTide.getTimeInMillis() - offset)))
-                notificationTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
-
-            Intent myIntent = new Intent(context, NotifyBroadcast.class);
-            myIntent.putExtra("nextLowTideTime", (calendarLowTide.getTimeInMillis()));
-            myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
-
-            if (nextHighAfterLow != null) {
-                myIntent.putExtra("nextHighTideTime", (nextHighAfterLow.dateTime));
-                myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
-            }
-
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, myIntent, 0);
-            Timber.d("TIME: " + Utils.getTime(notificationTime));
-            // Prepare notification only if it hasn't already been shown for this low tide
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            long previousNotificationTime = preferences.getLong(PREVIOUS_NOTIFICATION_TIME, 0);
-            if (!Utils.getTime(previousNotificationTime).equals(Utils.getTime(notificationTime))) {
-                if (Build.VERSION.SDK_INT >= 23)
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
-                else if (Build.VERSION.SDK_INT >= 19)
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
-                else alarmManager.set(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
-
-                Timber.d("alarm set for " + Utils.getTime(notificationTime));
-                preferences.edit().putLong(PREVIOUS_NOTIFICATION_TIME, notificationTime).apply();
-            }
-        }
-
-    }
 }

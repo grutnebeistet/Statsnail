@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textSize="@dimen/list_item_text_size"
+        android:textSize="@dimen/wind_speed_text_size"
         tools:text="2.3 mps" />
 
 </LinearLayout>

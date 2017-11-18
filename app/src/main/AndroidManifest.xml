@@ -55,16 +55,16 @@
             </intent-filter>
         </service>
         <receiver
-            android:name=".utils.NotifyBroadcast"
+            android:name=".utils.AlarmReceiver"
             android:label="BroadcastReceiverAux">
             <intent-filter>
                 <action android:name="ALARM" />
-
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 <!--        <service
-            android:name=".utils.NotifyBroadcast"
+            android:name=".utAlarmReceivercast"
             android:exported="false" />-->
         <service
             android:name=".sync.StatsnailSyncIntentService"

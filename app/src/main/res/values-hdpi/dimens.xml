@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="list_item_text_size">14sp</dimen>
+    <dimen name="wind_speed_text_size">12sp</dimen>
     <dimen name="list_item_img_size">18dp</dimen>
     <dimen name="tide_table_height">320dp</dimen>
     <dimen name="padding_double">8dp</dimen>
