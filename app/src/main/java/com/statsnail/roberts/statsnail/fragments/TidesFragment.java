@@ -2,6 +2,7 @@ package com.statsnail.roberts.statsnail.fragments;
 
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -23,6 +24,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
 import com.statsnail.roberts.statsnail.adapters.TidesDataAdapter;
@@ -32,6 +35,7 @@ import com.statsnail.roberts.statsnail.sync.StatsnailSyncTask;
 import com.statsnail.roberts.statsnail.utils.Utils;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +48,9 @@ import timber.log.Timber;
  */
 
 public class TidesFragment extends android.support.v4.app.Fragment implements
+        GoogleMap.OnMyLocationButtonClickListener,
+        GoogleMap.OnInfoWindowClickListener,
+        GoogleMap.OnMarkerClickListener,
         OnMapReadyCallback, android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor> {
     @BindView(R.id.tides_recycler_view)
     RecyclerView mTidesRecyclerView;
@@ -67,6 +74,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     ImageView mNextDayImg;
     @BindView(R.id.prev_day_image)
     ImageView mPrevDayImg;
+
+    private Marker mCurrentMarker;
 
     private static final int LOADER_ID_TIDES = 1349;
     private static final int LOADER_ID_WINDS = 1350;
@@ -109,6 +118,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     private static final int FORECAST_DAYS = 7;
     private GoogleMap mMap = null;
+    private View mLocationButton;
     // Stores the ID of the currently selected style, so that we can re-apply it when
     // the activity restores state, for example when the device changes orientation.
     private int mSelectedStyleId = R.string.style_label_default;
@@ -122,11 +132,12 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
             R.string.style_label_no_pois_no_transit,
             R.string.style_label_default,
     };
+    private static final int MAP_ZOOM_DEFAULT = 14;
     private static LatLng LAT_LNG;
     private Location mLocation;
     private TidesDataAdapter mTidesAdapter;
     private WindsDataAdapter mWindsAdapter;
-    private float mMapZoom = 8;
+    private float mMapZoom = MAP_ZOOM_DEFAULT;
     SharedPreferences mPreferences;
     private int mVisibility = View.VISIBLE;
 
@@ -143,20 +154,19 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
         if (savedInstanceState != null) {
-            Timber.d("savedInstance != NUll");
-            mSelectedStyleId = savedInstanceState.getInt(SELECTED_STYLE);
+            Timber.d("Saved not null");
+            //  mSelectedStyleId = savedInstanceState.getInt(SELECTED_STYLE);
             mMapZoom = savedInstanceState.getFloat(MAP_ZOOM);
             double longitude = savedInstanceState.getDouble(MainActivityFull.EXTRA_LONGITUDE);
             double latitude = savedInstanceState.getDouble(MainActivityFull.EXTRA_LATITUDE);
-            Timber.d("latitude saved : " + latitude);
 
             SharedPreferences.Editor editor = mPreferences.edit();
             editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(latitude));
             editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(longitude));
-            Timber.d("latitude to preference : " + String.valueOf(latitude));
             editor.apply();
-
+            Timber.d("Loaded LAT: " + latitude);
             LAT_LNG = new LatLng(latitude, longitude);
         }
 
@@ -164,10 +174,40 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         mTidesAdapter = new TidesDataAdapter(getActivity());
         mWindsAdapter = new WindsDataAdapter(getActivity());
 
+    }
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_tides, container, false);
+        mLocationButton = ((View) view.findViewById(Integer.parseInt("1")).getParent()).findViewById(Integer.parseInt("2"));
 
-        //getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, this);
-        // restartLoader(true);
+        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) mLocationButton.getLayoutParams();
+        // position on right bottom
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 0);
+        rlp.setMargins(0, 240, 32, 0);
 
+
+        ButterKnife.bind(this, view);
+
+        if (savedInstanceState != null)
+
+        {
+            mVisibility = savedInstanceState.getInt(CONTAINER_VISIBILITY);
+            mContainer.setVisibility(mVisibility);
+//            mMap.getUiSettings().setZoomGesturesEnabled(!(mVisibility == View.VISIBLE)); TODO maps er null her vett
+        }
+
+        mTidesRecyclerView.setLayoutManager(new
+
+                LinearLayoutManager(getActivity()));
+        mTidesRecyclerView.setAdapter(mTidesAdapter);
+
+        mWindsRecyclerView.setLayoutManager(new
+
+                LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
+        mWindsRecyclerView.setAdapter(mWindsAdapter);
+        return view;
     }
 
     private void initLocation() {
@@ -201,21 +241,20 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (savedInstanceState == null) {
-            initLocation();
-        }
-
-        restartLoader(true);
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        if (savedInstanceState == null) {
+            Timber.d("saved == null");
+            initLocation();
+        } else restartLoader(false);
 
         mResetLoc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 initLocation();
                 onMapReady(mMap);
-                mMapZoom = 8;
+                mMapZoom = MAP_ZOOM_DEFAULT;
                 mVisibility = View.VISIBLE;
             }
         });
@@ -237,8 +276,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
                         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_WINDS, null, TidesFragment.this);
                     }
-
-
                 } catch (ParseException e) {
                     Timber.e("failed to increase date");
                     e.printStackTrace();
@@ -252,7 +289,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
                 String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                         Utils.getDate(System.currentTimeMillis()));
-
                 try {
                     String yesterday = Utils.getDateMinusOne(currentDate);
                     mPreferences.edit().putString(EXTRA_TIDE_QUERY_DATE, yesterday).apply();
@@ -260,10 +296,9 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                     getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_TIDES, null, TidesFragment.this);
                     getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_WINDS, null, TidesFragment.this);
                 } catch (ParseException e) {
+                    Timber.e("failed to decrease date");
                     e.printStackTrace();
                 }
-
-
             }
         });
 
@@ -272,9 +307,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        Timber.d("onResume");
         if (!Utils.workingConnection(getActivity())) {
-            Timber.d("noConnect");
             mNextDayImg.setVisibility(View.INVISIBLE);
             mPrevDay.setVisibility(View.INVISIBLE);
             showSnackbar(getString(R.string.connection_error));
@@ -290,7 +323,8 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     private void restartLoader(boolean homeLocation) {
         try {
-            mLocationTextView.setText(Utils.getPlaceName(getActivity(), homeLocation));
+            //mLocationTextView.setText(Utils.getPlaceName(getActivity(), homeLocation));
+            mLocationTextView.setText(Utils.getAccuratePlaceName(getActivity(), homeLocation));
             String dateShown = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                     Utils.getDate(System.currentTimeMillis()));
             mDateTimeTextView.setText(Utils.getPrettyDate(Utils.getDateInMillisec(dateShown)));
@@ -302,32 +336,13 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
         getActivity().getSupportLoaderManager().restartLoader(LOADER_ID_WINDS, null, this);
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_tides, container, false);
-        ButterKnife.bind(this, view);
-
-        if (savedInstanceState != null) {
-            //      mLocationTextView.setText(savedInstanceState.getString(PLACE_NAME));
-            mVisibility = savedInstanceState.getInt(CONTAINER_VISIBILITY);
-            mContainer.setVisibility(mVisibility);
-        }
-
-        mTidesRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mTidesRecyclerView.setAdapter(mTidesAdapter);
-
-        mWindsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity(),LinearLayoutManager.HORIZONTAL,false));
-        mWindsRecyclerView.setAdapter(mWindsAdapter);
-        return view;
-    }
 
     @Override
     public android.support.v4.content.Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        Timber.d("onCr Loader");
         String sortOrder, selection;
         String[] selectionArgs = new String[]{mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                 Utils.getDate(System.currentTimeMillis()))};
-        ;
         switch (i) {
             case LOADER_ID_TIDES:
                 sortOrder = TidesContract.TidesEntry.COLUMN_TIME_OF_LEVEL + " ASC";
@@ -348,8 +363,9 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     @Override
     public void onLoadFinished(android.support.v4.content.Loader<Cursor> loader, Cursor cursor) {
+        Timber.d("onLoad finies, count: " + cursor.getCount());
         mContainer.setVisibility(mVisibility);
-        Timber.d("Cursor count: " + cursor.getCount() + " position: " + cursor.getPosition());
+        mMap.getUiSettings().setZoomControlsEnabled(!(mContainer.getVisibility() == View.VISIBLE));
         String currentDate = mPreferences.getString(EXTRA_TIDE_QUERY_DATE,
                 Utils.getDate(System.currentTimeMillis()));
         if (currentDate.compareTo(Utils.getDate(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1))) < 0) {
@@ -387,7 +403,6 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
     }
 
     private void updateValuesOnLocationChange(final boolean homeLocation) {
-        Timber.d("updateValuesOnLocationChange");
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -401,11 +416,26 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
 
     @Override
     public void onMapReady(GoogleMap map) {
-        Timber.d("onMapReady....LAT_LONG NULL: " + (LAT_LNG == null));
         mMap = map;
+        mResetLoc.setVisibility(View.GONE);
+   /*     mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setZoomGesturesEnabled(!(mVisibility == View.VISIBLE));
+        mMap.getUiSettings().setZoomGesturesEnabled(true);*/
+
+        mMap.setOnMyLocationButtonClickListener(this);
+        mMap.setMyLocationEnabled(true);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LAT_LNG, mMapZoom));
 
+        String maptype = mPreferences.getString(getString(R.string.pref_map_type_key), getString(R.string.map_type_def_value));
+        if (maptype.equals(String.valueOf(GoogleMap.MAP_TYPE_HYBRID)) ||
+                maptype.equals(String.valueOf(GoogleMap.MAP_TYPE_SATELLITE)))
+            mResetLoc.setBackgroundColor(Color.WHITE);
+        if (maptype.equals(String.valueOf(GoogleMap.MAP_TYPE_NONE)))
+            mResetLoc.setVisibility(View.GONE);
+
+        mMap.setMapType(Integer.parseInt(maptype));
         setSelectedStyle();
+
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
@@ -421,48 +451,94 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
             }
         });
 
-        mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onCameraMove() {
-                mContainer.setVisibility(View.INVISIBLE);
-            }
-        });
-        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
-            @Override
-            public void onCameraIdle() {
+            public void onMapClick(LatLng latLng) {
+                LAT_LNG = latLng;
+                SharedPreferences.Editor editor = mPreferences.edit();
+                editor.putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis()));
+                editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(latLng.latitude));
+                editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(latLng.longitude));
+                editor.commit();
+                String place = "";
+                try {
+                    place = Utils.getAccuratePlaceName(getActivity(), latLng);
+                    Timber.d(Utils.getAccuratePlaceName(getActivity(), latLng));
+                } catch (IOException e) {
+
+                }
+                if (mCurrentMarker != null) mCurrentMarker.remove();
+                mCurrentMarker = mMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .title("View conditions")
+                        .snippet(place));
+                mCurrentMarker.showInfoWindow();
+                mMap.setOnInfoWindowClickListener(TidesFragment.this);
             }
         });
 
+        mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+            @Override
+            public void onCameraMove() {
+                mContainer.setVisibility(View.GONE);
+                mMap.getUiSettings().setZoomControlsEnabled(true);
+            }
+        });
     }
+
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(EXTRA_TIDE_QUERY_DATE, Utils.getDate(System.currentTimeMillis()));
+        editor.putString(MainActivityFull.EXTRA_LATITUDE, String.valueOf(marker.getPosition().latitude));
+        editor.putString(MainActivityFull.EXTRA_LONGITUDE, String.valueOf(marker.getPosition().longitude));
+        editor.commit();
+        updateValuesOnLocationChange(false);
+        marker.hideInfoWindow();
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        mCurrentMarker.showInfoWindow();
+        return false;
+    }
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+        // Return false so that we don't consume the event and the default behavior still occurs
+        // (the camera animates to the user's current position).
+        initLocation();
+        //onMapReady(mMap);
+        mMapZoom = MAP_ZOOM_DEFAULT;
+        //mVisibility = View.VISIBLE;
+        return false;
+    }
+
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // Store the selected map style, so we can assign it when the activity resumes.
-        outState.putInt(SELECTED_STYLE, mSelectedStyleId);
+        //   outState.putInt(SELECTED_STYLE, mSelectedStyleId);
         if (mMap != null) outState.putFloat(MAP_ZOOM, mMap.getCameraPosition().zoom);
         // outState.putParcelable(LOCATION, mLocation);
         outState.putDouble(MainActivityFull.EXTRA_LATITUDE, LAT_LNG.latitude);
         outState.putDouble(MainActivityFull.EXTRA_LONGITUDE, LAT_LNG.longitude);
+        Timber.d("SAVED LAT: " + LAT_LNG.latitude);
         //outState.putString(PLACE_NAME, mLocationTextView.getText().toString());
         outState.putInt(CONTAINER_VISIBILITY, mContainer.getVisibility());
         super.onSaveInstanceState(outState);
     }
 
+    public static int getResId(String resName, Class<?> c) {
 
-   /* @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.styled_map, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_style_choose) {
-            showStylesDialog();
+        try {
+            Field idField = c.getDeclaredField(resName);
+            return idField.getInt(idField);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
         }
-        return true;
-    }*/
-
+    }
 
     /**
      * Creates a {@link MapStyleOptions} object via loadRawResourceStyle() (or via the
@@ -470,23 +546,26 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
      * via the setMapStyle() method.
      */
     private void setSelectedStyle() {
-        mSelectedStyleId = mPreferences.getInt(SELECTED_STYLE, R.string.style_label_default);
+/*        mSelectedStyleId = Integer.valueOf(
+                mPreferences.getString(getString(R.string.map_pref_key), getString(R.string.style_value_default)));*/
+        String mapStyle = mPreferences.getString(getString(R.string.map_pref_key), getString(R.string.style_label_default));
+
         Timber.d("setSelStyle style: " + getString(mSelectedStyleId));
         MapStyleOptions style;
-        switch (mSelectedStyleId) {
-            case R.string.style_label_retro:
+        switch (mapStyle) {
+            case "Retro":
                 // Sets the retro style via raw resource JSON.
                 style = MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.mapstyle_retro);
                 break;
-            case R.string.style_label_night:
+            case "Night":
                 // Sets the night style via raw resource JSON.
                 style = MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.mapstyle_night);
                 break;
-            case R.string.style_label_grayscale:
+            case "Grayscale":
                 // Sets the grayscale style via raw resource JSON.
                 style = MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.mapstyle_grayscale);
                 break;
-            case R.string.style_label_no_pois_no_transit:
+            case "No POIs or transit":
                 // Sets the no POIs or transit style via JSON string.
                 style = new MapStyleOptions("[" +
                         "  {" +
@@ -509,7 +588,7 @@ public class TidesFragment extends android.support.v4.app.Fragment implements
                         "  }" +
                         "]");
                 break;
-            case R.string.style_label_default:
+            case "Default":
                 // Removes previously set style, by setting it to null.
                 style = null;
                 break;

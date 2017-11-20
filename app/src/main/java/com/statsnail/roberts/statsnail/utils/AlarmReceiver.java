@@ -34,15 +34,11 @@ import timber.log.Timber;
  */
 
 public class AlarmReceiver extends BroadcastReceiver {
-    public static final String INTENT_FILTER = "myfilter";
-    private static final String LAST_NOTIFIED = "last_notified";
     private static final int TIDES_NOTIFICATION_ID = 1349;
     private static final String NOTIFICATION_CHANNEL_ID = "my_notification_channel";
 
     @Override
-    public void onReceive(Context context,@Nullable Intent intent) throws NullPointerException {
-        Timber.d("onreceive! notifiction...");
-
+    public void onReceive(Context context, @Nullable Intent intent) throws NullPointerException {
 
         long nextLowTideTime = intent.getLongExtra("nextLowTideTime", 0);
         String nextHighTideTime = intent.getStringExtra("nextHighTideTime");
@@ -61,14 +57,13 @@ public class AlarmReceiver extends BroadcastReceiver {
             notificationChannel.enableVibration(true);
             notificationManager.createNotificationChannel(notificationChannel);
         }
-/*        long minutesLeft = TimeUnit.MILLISECONDS.toMinutes(nextLowTideTime - System.currentTimeMillis());
-        long hoursLeft = TimeUnit.MINUTES.toHours(minutesLeft);*/
         String timeLeft = Utils.getRemainingTime(nextLowTideTime);
         String titleMessage;
         if ((timeLeft.charAt(0)) == '-') {
             titleMessage = "Tide was lowest " + timeLeft.substring(1) + " ago";
         } else
-            titleMessage = Utils.getRemainingTime(nextLowTideTime) + " until tide bottom";
+            titleMessage = timeLeft + " until tide bottom";
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setVibrate(new long[]{0, 100, 100, 100, 100, 100})
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
@@ -80,10 +75,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                         (nextHighTideTime != null ? ". Following peak at " + Utils.getFormattedTime(nextHighTideTime) : "."))
                 .setAutoCancel(true);
 
-        Class c = (com.statsnail.roberts.statsnail.BuildConfig.APPLICATION_ID.equals("com.statsnail.roberts.statsnail.full") ?
-                MainActivityFull.class : MainActivity.class);
         Intent activityIntent = new Intent(context, SignInActivity.class);
-
         TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
         taskStackBuilder.addNextIntentWithParentStack(activityIntent);
         PendingIntent resultPendingIntent = taskStackBuilder
@@ -91,19 +83,16 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         notificationBuilder.setContentIntent(resultPendingIntent);
 
-        // Only notify if there's been at least two hours since last time
-        long now = System.currentTimeMillis();
-        long lastNotified = PreferenceManager.getDefaultSharedPreferences(context).getLong(LAST_NOTIFIED, 0);
-        //      if ((now - lastNotified) >= TimeUnit.MILLISECONDS.toHours(2)) {
-        Timber.d("last notified >= 2 hours - try notify");
-        try {
-            notificationManager.notify(TIDES_NOTIFICATION_ID, notificationBuilder.build());
-            // TODO if notification not read/still visible - update time left to next tide (update notify)
-            PreferenceManager.getDefaultSharedPreferences(context).edit().putLong(LAST_NOTIFIED, now).apply();
-        } catch (NullPointerException e) {
-            Timber.d("failed notifying: " + e.getMessage());
-            e.printStackTrace();
-        }
-        // }
+        Boolean notificationsEnabled = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(
+                context.getResources().getString(R.string.pref_enable_notifications_key),
+                context.getResources().getBoolean(R.bool.show_notifications_by_default));
+        if (notificationsEnabled)
+            try {
+                notificationManager.notify(TIDES_NOTIFICATION_ID, notificationBuilder.build());
+                // TODO if notification not read/still visible - update time left to next tide (update notify)
+            } catch (NullPointerException e) {
+                Timber.d("failed notifying: " + e.getMessage());
+                e.printStackTrace();
+            }
     }
 }

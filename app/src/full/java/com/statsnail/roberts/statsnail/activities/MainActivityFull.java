@@ -211,12 +211,6 @@ public class MainActivityFull extends AppCompatActivity {
                             editor.commit();
 
                             SyncUtils.initialize(MainActivityFull.this);
-                            try {
-                                Timber.d(Utils.getPlaceDirName(MainActivityFull.this, mLastLocation));
-                            } catch (IOException e) {
-
-                            }
-
 
                         } else {
                             showSnackbar(getString(R.string.no_location_detected));

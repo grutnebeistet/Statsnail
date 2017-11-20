@@ -1,22 +1,17 @@
 package com.statsnail.roberts.statsnail.utils;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.preference.PreferenceManager;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.statsnail.roberts.statsnail.R;
 import com.statsnail.roberts.statsnail.activities.MainActivityFull;
-import com.statsnail.roberts.statsnail.models.TidesData;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -115,7 +110,7 @@ public final class Utils {
     // returns true if tomorrow is last day of forecast
     public static boolean isTomorrowLast(String dateString) throws ParseException {
         long now = System.currentTimeMillis();
-        long last = now + TimeUnit.DAYS.toMillis(6);
+        long last = now + TimeUnit.DAYS.toMillis(10);
         long testDate = getDateInMillisec(dateString);
 
         return (testDate + TimeUnit.DAYS.toMillis(1) >= last);
@@ -148,27 +143,35 @@ public final class Utils {
         return currentHours + ":" + minutes;
     }
 
-    public static String getPlaceDirName(Context context, Location location) throws IOException, IndexOutOfBoundsException {
-        Timber.d("Location null? " + (location == null));
+    public static String getAccuratePlaceName(Context context, LatLng latLng) throws IOException, IndexOutOfBoundsException {
+
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-        String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-        String fea = addresses.get(0).getFeatureName();
-        String state = addresses.get(0).getAdminArea();
-        String country = addresses.get(0).getCountryName();
-        String loc = addresses.get(0).getLocality();
-        String ka = addresses.get(0).getSubLocality();
-        String kairp = addresses.get(0).getPhone();
+        List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+        String address = addresses.get(0).getAddressLine(0);
         String subAdminArea = addresses.get(0).getSubAdminArea();
 
-        String slash = "/";
-        String builder = country + slash + state + slash + subAdminArea +
-                slash + ka + kairp + slash + slash + loc + slash + fea + slash + address;
+        StringBuilder sb = new StringBuilder();
+        String place = "";
+        if (address.substring(0, 7).equals("Unnamed") ||
+                address.substring(0, 2).equals("Fv") ||
+                address.substring(0, 2).equals("E1") ||
+                address.substring(0, 2).equals("E6") ||
+                address.substring(0, 2).equals("Rv"))
+            return getPlaceName(addresses);
+        for (char c : address.toCharArray()) {
+            if (Character.isLetter(c) || Character.isSpaceChar(c))
+                sb.append(c);
+            else break;
+        }
+        int possibleSpaceIndex = (sb.length() - 1);
+        if (Character.isSpaceChar(sb.charAt(possibleSpaceIndex)))
+            sb.deleteCharAt(possibleSpaceIndex);
 
-        return builder;
+        place = sb.append(", ").append(subAdminArea).toString();
+        return place;
     }
 
-    public static String getPlaceName(Context context, boolean homeLocation) throws IOException {
+    public static String getAccuratePlaceName(Context context, boolean homeLocation) throws IOException, IndexOutOfBoundsException {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
         String defaultLat = context.getResources().getString(R.string.default_latitude);
         String defaultLon = context.getResources().getString(R.string.default_longitude);
@@ -177,10 +180,27 @@ public final class Utils {
                 preference.getString(MainActivityFull.EXTRA_LATITUDE, defaultLat);
         String longitude = homeLocation ? preference.getString(MainActivityFull.HOME_LON, defaultLon) :
                 preference.getString(MainActivityFull.EXTRA_LONGITUDE, defaultLon);
+        LatLng latLng = new LatLng(Double.valueOf(latitude), Double.valueOf(longitude));
+        return getAccuratePlaceName(context, latLng);
+    }
 
-        Timber.d("LAT i getPlaceName: " + latitude);
+    private static String getPlaceName(List<Address> addresses) {
+        if (addresses.size() != 0) {
+            String subAdmin = addresses.get(0).getSubAdminArea();
+            String adminArea = addresses.get(0).getAdminArea();
+
+            return subAdmin != null && adminArea != null ? subAdmin + ", " + adminArea :
+                    subAdmin == null && adminArea != null ? adminArea :
+                            subAdmin != null && adminArea == null ? subAdmin : "Location unavailable";
+
+        }
+        return "Location unavailable";
+    }
+
+    public static String getPlaceName(Context context, LatLng latLng) throws IOException {
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        List<Address> addresses = geocoder.getFromLocation(Double.valueOf(latitude), Double.valueOf(longitude), 1);
+        List<Address> addresses = geocoder.getFromLocation(latLng.latitude,
+                latLng.longitude, 1);
 
         if (addresses.size() != 0) {
             String subAdmin = addresses.get(0).getSubAdminArea();
@@ -192,6 +212,19 @@ public final class Utils {
 
         }
         return "Location unavailable";
+    }
+
+    public static String getPlaceName(Context context, boolean homeLocation) throws IOException {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
+        String defaultLat = context.getResources().getString(R.string.default_latitude);
+        String defaultLon = context.getResources().getString(R.string.default_longitude);
+
+        String latitude = homeLocation ? preference.getString(MainActivityFull.HOME_LAT, defaultLat) :
+                preference.getString(MainActivityFull.EXTRA_LATITUDE, defaultLat);
+        String longitude = homeLocation ? preference.getString(MainActivityFull.HOME_LON, defaultLon) :
+                preference.getString(MainActivityFull.EXTRA_LONGITUDE, defaultLon);
+        LatLng latLng = new LatLng(Double.valueOf(latitude), Double.valueOf(longitude));
+        return getPlaceName(context, latLng);
     }
 
     public static boolean isGPSEnabled(Context mContext) {

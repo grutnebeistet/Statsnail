@@ -45,6 +45,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_weight="8"
+        android:maxLines="2"
         android:contentDescription="@string/content_desc_location"
         android:gravity="center"
         android:textSize="@dimen/location_textsize"

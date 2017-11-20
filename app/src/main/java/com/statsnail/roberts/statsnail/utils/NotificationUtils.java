@@ -33,10 +33,9 @@ import timber.log.Timber;
 
 public class NotificationUtils {
     private final static String PREVIOUS_NOTIFICATION_TIME = "prev_not";
+    private final static String PREVIOUS_NOTIFICATION_OFFSET = "prev_offset";
 
     public static void prepareNotification(Context context, List<TidesData.Waterlevel> waterlevels) {
-        Timber.d("prepareNotfic");
-
         // get next low tide to notify about
         TidesData.Waterlevel nextLow = null;
         TidesData.Waterlevel nextHighAfterLow = null;
@@ -46,38 +45,44 @@ public class NotificationUtils {
                 //  nextLow = (nextLow == null || (l.dateTime.compareTo(nextLow.dateTime) < 0) ? l : nextLow);
                 if (nextLow == null || (l.dateTime.compareTo(nextLow.dateTime) < 0)) {
                     nextLow = l;
-                    nextHighAfterLow = waterlevels.get(i + 1);
+                    if (waterlevels.size() > i+1) nextHighAfterLow = waterlevels.get(i + 1);
                 }
             }
         }
-
         if (nextLow != null) {
 
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
             // In case lowtide is after midnight, date must be considered
-            String lowTideDate = Utils.getFormattedDate(nextLow.dateTime);
-            String lowTideTime = Utils.getFormattedTime(nextLow.dateTime);
+            String lowTideDateString = Utils.getFormattedDate(nextLow.dateTime);
+            String lowTideTimeString = Utils.getFormattedTime(nextLow.dateTime);
 
             Calendar calendarLowTide = Calendar.getInstance();
 
-            calendarLowTide.set(Calendar.YEAR, Integer.valueOf(lowTideDate.substring(0, 4)));
-            calendarLowTide.set(Calendar.MONTH, Integer.valueOf(lowTideDate.substring(5, 7))-1);
-            calendarLowTide.set(Calendar.DATE, Integer.valueOf(lowTideDate.substring(8)));
-            calendarLowTide.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTime.substring(0, 2)));
-            calendarLowTide.set(Calendar.MINUTE, Integer.valueOf(lowTideTime.substring(3, 5)));
+            calendarLowTide.set(Calendar.YEAR, Integer.valueOf(lowTideDateString.substring(0, 4)));
+            calendarLowTide.set(Calendar.MONTH, Integer.valueOf(lowTideDateString.substring(5, 7)) - 1); // months are counted from 0
+            calendarLowTide.set(Calendar.DATE, Integer.valueOf(lowTideDateString.substring(8)));
+            calendarLowTide.set(Calendar.HOUR_OF_DAY, Integer.valueOf(lowTideTimeString.substring(0, 2)));
+            calendarLowTide.set(Calendar.MINUTE, Integer.valueOf(lowTideTimeString.substring(3, 5)));
             Timber.d("Date from calendar thing: " + calendarLowTide.getTime() + "\nvia utils: " +
                     Utils.getDate(calendarLowTide.getTimeInMillis()) + " " + Utils.getTime(calendarLowTide.getTimeInMillis()));
-            long offset = TimeUnit.HOURS.toMillis(3);
+
+            long currentTime = System.currentTimeMillis();
+            long lowTideTime = calendarLowTide.getTimeInMillis();
+            String hoursOffsetPrefs = PreferenceManager.getDefaultSharedPreferences(context).getString(
+                    context.getString(R.string.notify_hours_key), context.getString(R.string.notify_hours_default));
+            Timber.d("NOTIFY OFFSET PREF: " + hoursOffsetPrefs);
+            long offset = TimeUnit.HOURS.toMillis(Integer.parseInt(hoursOffsetPrefs));
             long offsetMargin = TimeUnit.MINUTES.toMillis(1);
-            long notificationTime = calendarLowTide.getTimeInMillis() - offset;
+            long notificationTime = lowTideTime - offset + offsetMargin;
 
             // set notification time to one minute from now if it's less than 3 hours till low tide
-            if (((notificationTime + offsetMargin) < (calendarLowTide.getTimeInMillis() - offset)))
-                notificationTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
+            //if ((notificationTime + offsetMargin) < notificationTime); //;(calendarLowTide.getTimeInMillis() - offset)))
+            if (currentTime + offset > lowTideTime)
+                notificationTime = currentTime;// + offsetMargin;
 
             Intent myIntent = new Intent(context, AlarmReceiver.class);   //(AlarmReceiver.INTENT_FILTER);
-            myIntent.putExtra("nextLowTideTime", (calendarLowTide.getTimeInMillis()));
+            myIntent.putExtra("nextLowTideTime", lowTideTime);
             myIntent.putExtra("nextLowTideLevel", nextLow.waterValue);
 
             if (nextHighAfterLow != null) {
@@ -85,26 +90,27 @@ public class NotificationUtils {
                 myIntent.putExtra("nextHighTideLevel", nextHighAfterLow.waterValue);
             }
 
-
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, myIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             // PendingIntent.FLAG_CANCEL_CURRENT);  // FLAG to avoid creating a second service if there's already one running
-            Timber.d("TIME: " + Utils.getTime(notificationTime));
-            Timber.d("DATE: " + Utils.getDate(notificationTime));
+
             // Prepare notification only if it hasn't already been shown for this low tide
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             long previousNotificationTime = preferences.getLong(PREVIOUS_NOTIFICATION_TIME, 0);
-            if (!Utils.getTime(previousNotificationTime).equals(Utils.getTime(notificationTime))) {
-                final int SDK_INT = Build.VERSION.SDK_INT;
+            String previousNotificationOffset = preferences.getString(PREVIOUS_NOTIFICATION_OFFSET, "0");
 
-                //   notificationTime = System.currentTimeMillis()+80000;      // TODO REMOVE
+            Timber.d("Previous time: " + previousNotificationTime + ", newtime: " + notificationTime);
+            if (!(Utils.getTime(previousNotificationTime).equals(Utils.getTime(lowTideTime))
+                    && hoursOffsetPrefs.equals(previousNotificationOffset))) {
+                final int SDK_INT = Build.VERSION.SDK_INT;
                 if (SDK_INT >= Build.VERSION_CODES.M)
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
                 else if (Build.VERSION_CODES.KITKAT <= SDK_INT && SDK_INT < Build.VERSION_CODES.M)
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
                 else alarmManager.set(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
 
-                Timber.d("alarm set for " + Utils.getTime(notificationTime));
-                preferences.edit().putLong(PREVIOUS_NOTIFICATION_TIME, notificationTime).apply();
+                Timber.d("New alarm set for " + Utils.getTime(notificationTime));
+                preferences.edit().putLong(PREVIOUS_NOTIFICATION_TIME, lowTideTime).
+                        putString(PREVIOUS_NOTIFICATION_OFFSET, hoursOffsetPrefs).apply();
             }
         }
     }

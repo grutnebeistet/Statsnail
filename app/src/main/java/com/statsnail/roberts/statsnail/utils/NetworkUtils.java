@@ -30,8 +30,8 @@ public final class NetworkUtils {
     private final static String TIDES_BASE_URL = "http://api.sehavniva.no/tideapi.php?";
     private final static String TIDES_PARAM_LAT = "lat";
     private final static String TIDES_PARAM_LONG = "lon";
-    private final static String TIDES_PARAM_FROM = "fromtime";
-    private final static String TIDES_PARAM_UNTIL = "totime";
+    private final static String TIDES_PARAM_FROM = "from";
+    private final static String TIDES_PARAM_UNTIL = "to";
     private final static String TIDES_PARAM_TIME_SUFFIX = "T00%3A00";
     private final static String TIDES_LANGUAGE_PREFIX = "datatype=tab&refcode=cd&place=&file=&lang";
     private final static String TIDES_LANGUAGE_SUFFIX = "&interval=60&dst=0&tzone=1&tide_request=locationdata";
@@ -50,7 +50,7 @@ public final class NetworkUtils {
 
         String language = "en"; // TODO language setting
         String fromDate = Utils.getDate(System.currentTimeMillis());
-        long offset = TimeUnit.DAYS.toMillis(7);
+        long offset = TimeUnit.DAYS.toMillis(10);
         String tillDate = Utils.getDate(System.currentTimeMillis() + offset);
 
         return "http://api.sehavniva.no/tideapi.php?lat=" + //63.4581662 +
@@ -66,9 +66,37 @@ public final class NetworkUtils {
 
     }
 
+
+    public static String buildSunRequestUrl(Context context, boolean homeLocation) {
+        String fromDate = Utils.getDate(System.currentTimeMillis());
+        long offset = TimeUnit.DAYS.toMillis(10);
+        String tillDate = Utils.getDate(System.currentTimeMillis() + offset);
+        String base = "https://beta.api.met.no/weatherapi/sunrise/1.1/";
+        String date = "&from=" + fromDate + "&to=" + tillDate;
+
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
+        String defaultLat = context.getResources().getString(R.string.default_latitude);
+        String defaultLon = context.getResources().getString(R.string.default_longitude);
+
+        String latitude = homeLocation ? preference.getString(MainActivityFull.HOME_LAT, defaultLat) :
+                preference.getString(MainActivityFull.EXTRA_LATITUDE, defaultLat);
+        String longitude = homeLocation ? preference.getString(MainActivityFull.HOME_LON, defaultLon) :
+                preference.getString(MainActivityFull.EXTRA_LONGITUDE, defaultLon);
+
+        Uri queryUri = Uri.parse(base).buildUpon()
+                .appendQueryParameter(TIDES_PARAM_LAT, latitude)
+                .appendQueryParameter(TIDES_PARAM_LONG, longitude)
+                .appendQueryParameter(TIDES_PARAM_FROM, fromDate)
+                .appendQueryParameter(TIDES_PARAM_UNTIL, tillDate)
+                .build();
+
+        return queryUri.toString();
+
+    }
+
     public static String buildWindsRequestUrl(Context context, boolean homeLocation) {
-       // String base = "https://beta.api.met.no/weatherapi/spotwind/1.0/?";
-        String base = "http://api.met.no/weatherapi/locationforecast/1.9/";
+        String base = "https://beta.api.met.no/weatherapi/locationforecast/1.9";
+        // String base = "http://api.met.no/weatherapi/locationforecast/1.9/";
         //?lat=60.10;lon=9.58";
 
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(context);
@@ -116,7 +144,7 @@ public final class NetworkUtils {
         } finally {
             if (inputStream != null) inputStream.close();
         }
-        return  windsValues;
+        return windsValues;
     }
 
     public static ArrayList<Station> loadAllStationsXml(String url) throws XmlPullParserException, IOException {

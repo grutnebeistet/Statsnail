@@ -69,7 +69,6 @@ public class HydrographicsXmlParser {
             }
         }
         parser.require(XmlPullParser.START_TAG, ns, "tide");
-        //
 
         String stationName = null;
         String stationCode = null;
@@ -100,12 +99,8 @@ public class HydrographicsXmlParser {
             }
             parser.nextTag();
         }
-
         return stations;
     }
-
-    // Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them off
-    // to their respective "read" methods for processing. Otherwise, skips the tag.
 
     private ContentValues[] readNearbyStationEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
         ContentValues[] tidesValues;
@@ -207,15 +202,14 @@ public class HydrographicsXmlParser {
                 }
 
                 // prepare notification only if parsed area is actual location
-                // No point in checking levels beyond the first 4 regarding notification
-                // TODO prepare only if not already prepared for this time
+                // No point in checking levels beyond the first 6 regarding notification
                 String homeLat = preferences.getString(
                         MainActivityFull.HOME_LAT, mContext.getString(R.string.default_latitude));
                 String homeLong = preferences.getString(
                         MainActivityFull.HOME_LON, mContext.getString(R.string.default_longitude));
 
                 Timber.d("Parsing hydrographiics...");
-                // and only if the data's being parsed utilizing users actual (home) location
+                // and only if the data being parsed is from users actual (home) location
                 if (latitude != null && longitude != null &&
                         latitude.substring(0, 7).equals(homeLat.substring(0, 7))
                         && longitude.substring(0, 7).equals(homeLong.substring(0, 7)))
@@ -238,7 +232,7 @@ public class HydrographicsXmlParser {
                 return tidesValues;
 
             } else {
-                skip(parser); // nødvendig?
+                skip(parser);
             }
         }
         return null;

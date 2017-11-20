@@ -28,7 +28,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <include layout="@layout/tides_place_navigation" />
+            <include
+                android:id="@+id/place_nav"
+                layout="@layout/tides_place_navigation" />
 
             <TextView
                 android:id="@+id/forecast_date"
@@ -39,8 +41,26 @@
                 android:textSize="@dimen/list_item_text_size"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/title_ll"
+                app:layout_constraintTop_toBottomOf="@+id/place_nav"
                 tools:text="Monday, Oct 23rd" />
+
+<!--            <include
+                android:id="@+id/sunrise_set"
+                layout="@layout/rise_set"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintRight_toLeftOf="@id/forecast_date"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/tides_rv_frame"/>
+
+            <include
+                android:id="@+id/moonrise_set"
+                layout="@layout/moon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintLeft_toRightOf="@id/forecast_date"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/tides_rv_frame"/>-->
 
             <android.support.constraint.Guideline
                 android:id="@+id/divider"
@@ -63,8 +83,9 @@
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/tides_recycler_view"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    />
             </FrameLayout>
 
             <TextView

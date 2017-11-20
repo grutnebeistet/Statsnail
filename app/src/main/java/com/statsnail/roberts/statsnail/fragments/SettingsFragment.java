@@ -9,6 +9,7 @@ import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.PreferenceScreen;
 
 import com.statsnail.roberts.statsnail.R;
+import com.statsnail.roberts.statsnail.sync.SyncUtils;
 
 import timber.log.Timber;
 
@@ -22,8 +23,12 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         addPreferencesFromResource(R.xml.app_preferences);
 
-        SharedPreferences sharedPreferences = getPreferenceScreen().getSharedPreferences();
         PreferenceScreen prefScreen = getPreferenceScreen();
+        SharedPreferences sharedPreferences = prefScreen.getSharedPreferences();
+        if (sharedPreferences.getString(getString(R.string.pref_map_type_key),
+                getString(R.string.map_type_def_value)).equals(getString(R.string.map_type_def_value)))
+            findPreference(getString(R.string.map_pref_key)).setEnabled(true);
+
         int count = prefScreen.getPreferenceCount();
         for (int i = 0; i < count; i++) {
             Preference p = prefScreen.getPreference(i);
@@ -35,10 +40,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     }
 
     private void setPreferenceSummary(Preference preference, Object value) {
-
         String stringValue = value.toString();
         String key = preference.getKey();
-        Timber.d("setPreferenceSummary, value, key: " + value+", "+key);
+        Timber.d("setPreferenceSummary, value, key: " + value + ", " + key);
 
         if (preference instanceof ListPreference) {
             /* For list preferences, look up the correct display value in */
@@ -48,6 +52,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             if (prefIndex >= 0) {
                 Timber.d("set summary: " + listPreference.getEntries()[prefIndex]);
                 preference.setSummary(listPreference.getEntries()[prefIndex]);
+                if (key.equals(getString(R.string.pref_map_type_key)))
+                    if (!value.equals(getString(R.string.map_type_def_value)))
+                        findPreference(getString(R.string.map_pref_key)).setEnabled(false);
+                    else findPreference(getString(R.string.map_pref_key)).setEnabled(true);
             }
         } else {
             // For other preferences, set the summary to the value's simple string representation.
@@ -58,6 +66,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Timber.d("onSharedPreferenceChanged, string: " + s);
+        if (s.equals(getString(R.string.notify_hours_key)) ||
+                s.equals(getString(R.string.pref_enable_notifications_key))) {
+            SyncUtils.startImmediateSync(getActivity()); // TODO instead of parsing again, just query in make notifics
+        }
         Preference preference = findPreference(s);
         if (null != preference) {
             if (!(preference instanceof CheckBoxPreference)) {
@@ -81,5 +93,4 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         getPreferenceScreen().getSharedPreferences()
                 .registerOnSharedPreferenceChangeListener(this);
     }
-
 }

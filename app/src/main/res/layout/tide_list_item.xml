@@ -58,7 +58,6 @@
                 android:layout_width="@dimen/list_item_img_size"
                 android:layout_height="@dimen/list_item_img_size"
                 android:layout_alignParentEnd="true"
-                android:layout_gravity="center_vertical"
                 android:contentDescription="@string/content_desc_tide_img"
                 tools:src="@drawable/high_tide" />
         </RelativeLayout>
